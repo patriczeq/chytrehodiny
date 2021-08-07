@@ -9,9 +9,10 @@
   #define SETTINGS_ADDR 100
   #define EEPROM_SIZE 4095
   #define MYNUM 920820
+  #define FACTORY_RESET_DELAY 5000
 
-  #define AP_SSID "Chytré Hodiny"
-  #define HOSTNAME "chytrehodiny"
+  #define AP_SSID "Hodiny"
+  #define HOSTNAME "hodiny"
   #define NTP_TIMEZONE_GMT 2
   
   #define ST_SSID ""
@@ -31,11 +32,21 @@
     uint8_t m;
     uint8_t s;
   };
+  struct dateformat{
+    uint16_t y;
+    uint8_t m;
+    uint8_t d;
+  };
+  struct datetimeformat{
+    dateformat d;
+    timeformat t;
+  };
 
   struct cfgObject{
     network   client;
     rgb       mainColor;
     rgb       bgColor;
+    uint8_t   bright;
     uint8_t   timeZone;
     uint8_t   wifiMode;
     uint8_t   boardMode;

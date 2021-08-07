@@ -47,6 +47,23 @@ const uint8_t* pole_minut[] PROGMEM =  {
  };
 // ================================================================================================== SET
 const byte w_set[]      PROGMEM = {74, 75, 76};                                               //  SET
+// ================================================================================================== Kalendář
+const char d_po_long[]  PROGMEM = "Pondělí";
+const char d_ut_long[]  PROGMEM = "Úterý";
+const char d_st_long[]  PROGMEM = "Středa";
+const char d_ct_long[]  PROGMEM = "Čtvrtek";
+const char d_pa_long[]  PROGMEM = "Pátek";
+const char d_so_long[]  PROGMEM = "Sobota";
+const char d_ne_long[]  PROGMEM = "Neděle";
+const char* dow_long[] PROGMEM =  {  d_po_long, d_ut_long, d_st_long, d_ct_long, d_pa_long, d_so_long, d_ne_long};
+const char d_po_short[]  PROGMEM = "Po";
+const char d_ut_short[]  PROGMEM = "Út";
+const char d_st_short[]  PROGMEM = "St";
+const char d_ct_short[]  PROGMEM = "Čt";
+const char d_pa_short[]  PROGMEM = "Pá";
+const char d_so_short[]  PROGMEM = "So";
+const char d_ne_short[]  PROGMEM = "Ne";
+const char* dow_short[] PROGMEM =  {  d_po_short, d_ut_short, d_st_short, d_ct_short, d_pa_short, d_so_short, d_ne_short};
 
 
 #endif

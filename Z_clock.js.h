@@ -10,7 +10,7 @@ const char file_clock_js[] PROGMEM = R"=====(
  */
 export default class {
   constructor(clock = null){
-    this.clock = document.querySelector(clock);
+    this.clock = this.qs(clock);
     this.paleta = [
                     [   "W", "E", "B", "U", "D", "O", "U", "B", "U", "D", "E" ], //  00,  01,  02,  03,  04,  05,  06,  07,  08,  09,  10
                     [   "J", "E", "J", "S", "O", "U", "J", "E", "D", "N", "A" ], //  11,  12,  13,  14,  15,  16,  17,  18,  19,  20,  21
@@ -53,17 +53,20 @@ export default class {
         timezone: 2,
         main_color: [255,255,255],
         bg_color: [0,0,0],
+        bright: 0,
         board_mode: 0
     };
     this.cfgLoad();
     this.pxloader = setInterval(() => {
-      this.fetch("pixels.json")
+      if(!this.qs("body").classList.contains("sett")){
+        this.fetch("pixels.json")
           .then(data => {
             if('px' in data)
               {
                 this.activePixels = data.px;
               }
-          });
+          }, error => {});  
+      }
     }, 2000);
   }
   
@@ -74,7 +77,7 @@ export default class {
     return this.cfg.wifi_mode == 1 ? "Režim AP" : `Připojeno k síti ${this.cfg.sta_ssid}`;
   }
   get strTime(){
-    return `${this.cfg.time[0] < 10 ? "0" + this.cfg.time[0] : this.cfg.time[0]}:${this.cfg.time[1] < 10 ? "0" + this.cfg.time[1] : this.cfg.time[2]}:${this.cfg.time[2] < 10 ? "0" + this.cfg.time[2] : this.cfg.time[2]}`;
+    return `${this.cfg.time[0] < 10 ? "0" + this.cfg.time[0] : this.cfg.time[0]}:${this.cfg.time[1] < 10 ? "0" + this.cfg.time[1] : this.cfg.time[1]}:${this.cfg.time[2] < 10 ? "0" + this.cfg.time[2] : this.cfg.time[2]}`;
   }
   cfgLoad(){
     this.fetch("cfg.json")
@@ -89,12 +92,20 @@ export default class {
   toHex(d) {
     return  ("0"+(Number(d).toString(16))).slice(-2).toUpperCase();
   }
+  qs(el = "body"){
+    return document.querySelector(el);
+  }
+  ce(el = "span"){
+    return document.createElement(el);
+  }
+  listen(el = "body", ev = "click", ef = ()=>{}){
+    this.qs(el).addEventListener(ev, ef);
+  }
   rgbHex(rgbarr = [0,0,0]){
     return `#${this.toHex(rgbarr[0])}${this.toHex(rgbarr[1])}${this.toHex(rgbarr[2])}`;
   }
   HexRgb(hex = "#000000"){
     hex = (hex.length == 7 ? hex.substring(1) : hex).toUpperCase();
-    
     return [
       parseInt(hex.substring(0,2), 16),
       parseInt(hex.substring(2,4), 16),
@@ -102,11 +113,17 @@ export default class {
     ];
   }
   cfgHtmlUpdate(){
-    document.querySelector("#status").innerHTML   = this.wifiStatus;
-    document.querySelector("#colorselect").value  = this.rgbHex(this.cfg.main_color);
-    document.querySelector("#modeselect").value   = this.cfg.board_mode;
-    document.querySelector("#manualtime").value   = this.strTime;
-    document.querySelector("#timezone").value     = this.cfg.timezone;
+    this.qs("#status").innerHTML    = this.wifiStatus;
+    this.qs("#colorselect").value   = this.rgbHex(this.cfg.main_color);
+    this.qs("#modeselect").value    = this.cfg.board_mode;
+    this.qs("#manualtime").value    = this.strTime;
+    this.qs("#timezone").value      = this.cfg.timezone;
+    this.qs("#bright").value        = this.cfg.bright;
+    
+    for(let cell of document.querySelectorAll(".cell"))
+      {
+        cell.style.opacity = (this.cfg.bright / 255);
+      }
   }
   
   async fetch(file = "cfg.json", post = false){
@@ -143,9 +160,9 @@ export default class {
         });
   }
   settingsCard(t = "", c = null){
-    let card    = document.createElement("div"),
-        title   = document.createElement("h4"),
-        content = document.createElement("div");
+    let card    = this.ce("div"),
+        title   = this.ce("h4"),
+        content = this.ce("div");
         card.classList.add("sett-card");
         content.classList.add("sett-card-content");
         title.innerHTML = t;
@@ -157,17 +174,17 @@ export default class {
   }
   vytvorHTML()
     {
-      let hodiny    = document.createElement("div");
+      let hodiny    = this.ce("div");
           hodiny.classList.add("hodiny");
       let cid = 0,
           that = this;
       for(let row of this.paleta)
         {
-          let rowel = document.createElement("div");
+          let rowel = this.ce("div");
               rowel.classList.add("row");
           for(let cell of row)
             {
-              let cellel = document.createElement("div");
+              let cellel = this.ce("div");
                   cellel.classList.add("cell");
                   if(cell == "W")
                     {
@@ -176,7 +193,7 @@ export default class {
                   cellel.setAttribute("cellid", cid);
               for(let letter of cell)
                 {
-                  let letterEl = document.createElement("div");
+                  let letterEl = this.ce("div");
                       letterEl.classList.add("letter");
                       letterEl.setAttribute("char", letter);
                       cellel.appendChild(letterEl);
@@ -192,93 +209,112 @@ export default class {
   listeners(){
     let that = this;
     // nastaveni toggle
-    document.querySelector(".hodiny").addEventListener("click", e => {
-          if(document.querySelector("body").classList.contains("sett"))
+    this.listen(".hodiny", "click", e => {
+          if(this.qs("body").classList.contains("sett"))
             {
-              document.querySelector("body").classList.remove("sett");
+              this.qs("body").classList.remove("sett");
             }
           else
             {
-              document.querySelector("body").classList.add("sett");
+              this.qs("body").classList.add("sett");
             }
         });
-    document.querySelector("#cancel").addEventListener("click", e => {
-          document.querySelector("body").classList.remove("sett");
+    // back
+    this.listen("#cancel", "click", e => {
+          this.qs("body").classList.remove("sett");
         });
-        
     // vychozi barva
-    document.querySelector("#colorselect").addEventListener("input", e => {
+    this.listen("#colorselect", "input", e => {
           that.cfg.main_color = that.HexRgb(e.target.value);
         });
     // bg barva
-    document.querySelector("#bgcolorselect").addEventListener("input", e => {
+    this.listen("#bgcolorselect", "input", e => {
           that.cfg.bg_color = that.HexRgb(e.target.value);
         });
+    // board mode
+    this.listen("#modeselect", "input", e => {
+      that.cfg.board_mode = Number(e.target.value);
+    });
+    // jas
+    this.listen("#bright", "input", e => {
+      that.cfg.bright = Number(e.target.value);
+      for(let cell of document.querySelectorAll(".cell"))
+        {
+          cell.style.opacity = (that.cfg.bright / 255);
+        }
+    });
+    // tz
+    this.listen("#timezone", "change", e => {
+      that.cfg.timezone = Number(e.target.value);
+    });
     // cas z prohlizece
-      document.querySelector("#timebutton").addEventListener("click", e => {
-        const dt = new Date();
-              that.cfg.time[0] = dt.getHours();
-              that.cfg.time[1] = dt.getMinutes();
-              that.cfg.time[2] = dt.getSeconds();
-              console.log(this.cfg.time);
-              document.querySelector("#manualtime").value = that.strTime;
-      });
+    this.listen("#timebutton", "click", e => {
+      const dt = new Date();
+            that.cfg.time[0] = dt.getHours();
+            that.cfg.time[1] = dt.getMinutes();
+            that.cfg.time[2] = dt.getSeconds();
+            console.log(this.cfg.time);
+            this.qs("#manualtime").value = that.strTime;
+    });
     // ntp cas
-      document.querySelector("#ntpbutton").addEventListener("click", e => {
+    this.listen("#ntpbutton", "click", e => {
         if(that.cfg.wifi_mode == 2)
           {
-            that.fetch("ntp").then(data => {
+            that.fetch(`ntp?tz=${that.cfg.timezone}`).then(data => {
               that.cfgLoad();
             });
           }
       });
-    
     // rucni uprava
-      document.querySelector("#manualtime").addEventListener("input", e => {
+    this.listen("#manualtime", "input", e => {
         let t = e.target.value.split(":");
         that.cfg.time[0] = Number(t[0]);
         that.cfg.time[1] = Number(t[1]);
         that.cfg.time[2] = Number(t[2]);
       });
     // scan siti
-    document.querySelector("#scanbutton").addEventListener("click", e => {
-          for(let opt of document.querySelector("#networks").querySelectorAll("option")){opt.remove();}
-          let option = document.createElement("option");
+    this.listen("#scanbutton", "click", e => {
+          for(let opt of this.qs("#networks").querySelectorAll("option")){opt.remove();}
+          let option = this.ce("option");
                     option.innerHTML = "Probíhá vyhledávání sítí";
-                document.querySelector("#networks").appendChild(option);
+                this.qs("#networks").appendChild(option);
           this.scan.then(data => {
             this.networks = data;
-            for(let opt of document.querySelector("#networks").querySelectorAll("option")){opt.remove();}
+            for(let opt of this.qs("#networks").querySelectorAll("option")){opt.remove();}
             for(let i in data)
               {
-                    option = document.createElement("option");
+                    option = this.ce("option");
                     option.value = i;
                     option.innerHTML = data[i][0];
-                document.querySelector("#networks").appendChild(option);
+                this.qs("#networks").appendChild(option);
               }
           });
         });
-        
-      // pripojit k wifi
-    document.querySelector("#connect").addEventListener("click", e => {
-          let ssid = that.networks[Number(document.querySelector("#networks").value)][0],
-              pass = document.querySelector("#pwd").value;
+    // pripojit k wifi
+    this.listen("#connect", "click", e => {
+          let ssid = that.networks[Number(this.qs("#networks").value)][0],
+              pass = this.qs("#pwd").value;
               that.fetch(`apply?ssid=${ssid}&pwd=${pass}`).
                 then(data => {
                   console.log(data);
                 });
               
         });
-      // aplikovat
-    document.querySelector("#applyall").addEventListener("click", e => {
+    // aplikovat
+    this.listen("#applyall", "click", e => {
           let cfg = {
+                board_mode: that.cfg.board_mode,
                 time_h: that.cfg.time[0],
                 time_m: that.cfg.time[1],
                 time_s: that.cfg.time[2],
                 timezone: that.cfg.timezone,
+                bright: that.cfg.bright,
                 color_r: that.cfg.main_color[0],
                 color_g: that.cfg.main_color[1],
-                color_b: that.cfg.main_color[2]
+                color_b: that.cfg.main_color[2],
+                bcolor_r: that.cfg.bg_color[0],
+                bcolor_g: that.cfg.bg_color[1],
+                bcolor_b: that.cfg.bg_color[2]
               },
               query = [];
           for(let key in cfg)
@@ -291,17 +327,16 @@ export default class {
               console.log(data);
             });
         });
-        
-      // tovarko
-      document.querySelector("#defaults").addEventListener("click", e => {
-        if(confirm("Opravdu chcete provést tovární nastavení?"))
-          {
-            that.fetch("apply?factoryReset")
-              .then(data => {
-                console.log(data);
-              });
-          }
-      });
+    // tovarko
+    this.listen("#defaults", "click", e => {
+      if(confirm("Opravdu chcete provést tovární nastavení?"))
+        {
+          that.fetch("apply?factoryReset")
+            .then(data => {
+              console.log(data);
+            });
+        }
+    });
   }
   
   vykresli()
@@ -319,8 +354,8 @@ export default class {
       // vykreslit
       for(let p in this.pixely)
         {
-          document.querySelector(`[cellid="${p}"]`).style["text-shadow"] = this.pixely[p] === "#000" ? "none": "0 0 calc( var(--cell-size) / 4)";
-          document.querySelector(`[cellid="${p}"]`).style.color = this.pixely[p];
+          this.qs(`[cellid="${p}"]`).style["text-shadow"] = this.pixely[p] === "#000" ? "none": "0 0 calc( var(--cell-size) / 4)";
+          this.qs(`[cellid="${p}"]`).style.color = this.pixely[p];
         }
     }
 }

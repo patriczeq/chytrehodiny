@@ -50,6 +50,7 @@ class CFG {
       void setTimeZone(byte tz, bool autosave = true);
       void setWifiMode(byte mod, bool autosave = true);
       void setBoardMode(byte mod, bool autosave = true);
+      void setBright(byte b, bool autosave = true);
       void save(bool reboot = false);
       void FactoryReset();
       /* getters */
@@ -57,6 +58,8 @@ class CFG {
       bool load();
       network getNetwork();
       rgb getMainColor();
+      rgb getBgColor();
+      byte getBright();
       byte getTimeZone();
       byte getWifiMode();
       byte getBoardMode();

@@ -1,4 +1,9 @@
 const char file_style_css[] PROGMEM = R"=====(
+
+
+
+
+
 :root{
   --cell-size: calc( 75vh / 11);
   --font-size: calc( var(--cell-size) * .6);
@@ -25,9 +30,14 @@ body{
   font-family: "BoardFont";
   font-weight: 200;
   transform-origin: center center;
+  overflow-y: auto;
 }
 
 body.sett{
+}
+
+a{
+  color: currentColor;
 }
 
 .nastaveni,
@@ -129,20 +139,19 @@ body.sett{
 
 
 .sett .hodiny{
-  transform: translate(-150%, calc( var(--cell-size) / 4)) rotateY(0deg);
+  transform: translate(calc( var(--cell-size) * -11), 0) rotateY(0deg) scale(.75);
 }
 
 
 .nastaveni{
   background-color: transparent;
   background-image: none;
-  height: calc(100vh - 32px);
   top: 0;
   right: 0;
   left: unset;
   position: absolute;
   z-index: 0;
-  transform: translate(100%, 0%);
+  transform: translate(100%, 0%) scale(.5);
   pointer-events: none;
   box-shadow: none;
   color: #000;
@@ -152,7 +161,7 @@ body.sett{
   padding: 16px;
 }
 .sett .nastaveni{
-  transform: translate(0%, 0%);
+  transform: translate(0%, 0%) scale(1);
   pointer-events: all;
 }
 
@@ -174,10 +183,10 @@ body.sett{
   margin: 0;
   margin-bottom: 8px;
   font-size: 20px;
-  font-weight: 200;
+  font-weight: 400;
   color: #111;
   position: relative;
-  font-family: 'BoardFont';
+  font-family: Sans-serif;
 }
 .nastaveni .sett-card h4::before{
   content: "";
@@ -191,6 +200,8 @@ body.sett{
 }
 .nastaveni .sett-card .sett-card-content{
   padding: 8px;
+  font-size: 16px;
+  font-family: Sans-serif;
 }
 .nastaveni label{
   margin-right: 8px;
@@ -199,22 +210,56 @@ body.sett{
 .nastaveni button,
 .nastaveni select,
 .nastaveni input:focus{
-  font-size: 20px;
+  font-size: 16px;
   border: 0;
   color: #000;
   background-color: rgba(0,0,0,.05);
-  padding: 8px;
+  padding: 4px 8px 4px 8px;
   outline: none;
   border-radius: 16px;
   text-align: center;
   min-width: 150px;
   margin: 4px;
   border: 1px solid rgba(0,0,0,.05);
+  color: #333;
+  text-align: center !important;
 }
 .nastaveni button,
 .nastaveni select{
   cursor: pointer;
 }
+.nastaveni select:empty,
+.nastaveni select:empty + input,
+.nastaveni select:empty ~ button{
+  display: none;
+}
+
+.nastaveni select option {
+    background: #fff;
+    color: #111;
+}
+
+.nastaveni input[type='range']{
+  -webkit-appearance: none;
+  width: 100%;
+  height: 20px;
+  outline: none;
+  overflow: hidden;
+  padding: 2px;
+}
+
+
+.nastaveni input[type='range']::-webkit-slider-thumb,
+.nastaveni input[type='range']::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  cursor: pointer;
+  border-radius: 50%;
+  border: 0;
+  box-shadow: 4px 4px 8px rgba(0,0,0,.25)
+}
+
 
 .nastaveni button.factory{
   background-color: transparent;
@@ -249,6 +294,22 @@ body.sett{
   display: flex;
   flex-flow: column;
   flex-grow: 1;
+  position: relative;
+}
+
+.nastaveni .sett-card .sett-card-content.save button#cancel::before,
+.nastaveni .sett-card .sett-card-content.save button#cancel::after{
+  content: "";
+  width: 6px;
+  height: 1px;
+  background-color: #999;
+  transform: rotate(45deg) translate(50%, -50%);
+  position: absolute;
+  left: 8px;
+  top: 50%;
+}
+.nastaveni .sett-card .sett-card-content.save button#cancel::after{
+  transform: rotate(-45deg) translate(50%, -50%);
 }
 
 
@@ -257,9 +318,17 @@ body.sett{
     --cell-size: calc( 75vw / 11);
     --font-size: calc( var(--cell-size) * .6);
   }
+  .nastaveni{
+    width: calc(100vw - 48px);
+    transform: translateX(100%);
+  }
   .sett .nastaveni{
-    background-color: #ddd;
-    width: calc(100vw - 32px);
+    transform: translateX(0);
+  }
+  .sett .hodiny{
+    transform: translate(calc( var(--cell-size) * -22), 0) rotateY(0deg);
   }
 }
+
+
 )=====";

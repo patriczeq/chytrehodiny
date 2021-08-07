@@ -6,20 +6,28 @@ NeoPixel::~NeoPixel() {}
 
 void NeoPixel::setup(){
   logger("BOARD", "Pripravuji promenne");
-  setColor(cfg.getMainColor());
-  setBgColor(BARVY::CERNA);
+  this->setColor(cfg.getMainColor());
+  this->setBgColor(cfg.getBgColor());
+  this->setBright(cfg.getBright());
+  
   for(uint8_t i = 0; i < NUMPIXELS; i++)
     {
-      board[i].r = mainColor.r;
-      board[i].g = mainColor.g;
-      board[i].b = mainColor.b;
+      this->board[i].r = mainColor.r;
+      this->board[i].g = mainColor.g;
+      this->board[i].b = mainColor.b;
     }
-  setMode(cfg.getBoardMode());
+  this->setMode(cfg.getBoardMode());
 }
 void NeoPixel::setMode(uint8_t m)
   {
-    mode = m;
+    this->mode = m;
   }
+void NeoPixel::setBright(uint8_t b){
+  this->bright = b;
+}
+byte NeoPixel::getBright(){
+  return this->bright;
+}
 void NeoPixel::draw(){
   if(enabled)
     {
@@ -29,6 +37,11 @@ void NeoPixel::draw(){
       }
       pixels.show(); 
     }
+}
+
+void NeoPixel::setBoardMode(uint8_t bm){
+  mode = bm;
+  logger("BOARD", "Zmena modu ["+String(bm)+"]");
 }
 
 /* helpers */
@@ -47,6 +60,7 @@ rgb NeoPixel::hexRgb(String hex){
     }
   return h;
 }
+
 
 /* color functions */
 void NeoPixel::setColor(uint8_t r, uint8_t g, uint8_t b){
@@ -155,7 +169,7 @@ void NeoPixel::update(){
           drawSET();
           break;
         case MOD::HODINY:
-          drawTime(myTime.h, myTime.m);
+          drawTime(mytime.getTime().h, mytime.getTime().m);
           break;
       }
       lastUpdate = currentTime;
@@ -273,7 +287,7 @@ void NeoPixel::setUpdate(uint32_t u){
 void NeoPixel::debug(){
   prntln("");
   prntln("Vizualizace:");
-  prntln("||=============>"+ myTimeStr() + "<==========||");
+  prntln("||=============>"+ mytime.getTimeStr() + "<==========||");
   prnt(F("||"));
   for(int i=1; i < (NUMPIXELS + 1); i++)
     {

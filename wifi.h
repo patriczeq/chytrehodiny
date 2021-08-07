@@ -7,6 +7,7 @@ extern "C" {
 }
 
 #include "A_config.h"
+#include "mytime.h"
 #include "cfg.h"
 #include "neopixel.h"
 #include <ESP8266WiFi.h>
@@ -14,24 +15,19 @@ extern "C" {
 #include <ESP8266WebServer.h>   // HTTP server
 #include <ESP8266HTTPClient.h>  // HTTP client
 #include <DNSServer.h>          // DNS server
-#include <WiFiUdp.h>            // UDP proccessing
-#include <NTPClient.h>          // NTP client
 #include <ESP8266mDNS.h>        // mDNS
 
 
 extern uint32_t currentTime;
-extern timeformat  myTime;
 extern void prnt(String p);
 extern void prntln(String p);
 extern void logger(String module, String message);
 extern String str(const char* ptr);
-extern uint8_t tz;
-extern void setMyTime(uint8_t h, uint8_t m, uint8_t s);
-extern void setMyTime(timeformat t);
 extern network s2net(String ssid, String password);
 
 extern NeoPixel    neopixel;
 extern CFG    cfg;
+extern MYTIME    mytime;
 
 class WIFI {
     public:
@@ -53,6 +49,7 @@ class WIFI {
       void SetNtpTZ(uint8_t tz_);
       String getCliSSID();
       String getCliPWD();
+      void updateLED();
       WIFI();
       ~WIFI();
     private:
@@ -69,6 +66,14 @@ class WIFI {
         AP  = 1,
         ST = 2
       };
+      enum LED_MODES{
+        LED_ST = 0,
+        LED_AP = 1,
+        LED_CONN = 2
+      };
+      byte ledMode = 0;
+      bool ledUp = true;
+      uint32_t ledTime = 0;
       uint8_t mode = cfg.getWifiMode();
  };
  #endif

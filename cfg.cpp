@@ -21,6 +21,7 @@ void CFG::setup(){
 void CFG::defaults(){
   
   data.client     = network {ST_SSID, ST_PASS};
+  data.bright     = 255;
   data.mainColor  = rgb {255, 255, 255};
   data.bgColor    = rgb {0, 0, 0};
   data.timeZone   = NTP_TIMEZONE_GMT;
@@ -78,6 +79,9 @@ network CFG::getNetwork(){
 rgb CFG::getMainColor(){
   return data.mainColor;
 }
+rgb CFG::getBgColor(){
+  return data.bgColor;
+}
 byte CFG::getTimeZone(){
   return data.timeZone;
 }
@@ -86,6 +90,9 @@ byte CFG::getWifiMode(){
 }
 byte CFG::getBoardMode(){
   return data.boardMode;
+}
+byte CFG::getBright(){
+  return data.bright;
 }
 
 /* setters */
@@ -99,6 +106,26 @@ void CFG::setMainColor(rgb color, bool autosave){
 
 void CFG::setBgColor(rgb color, bool autosave){
   data.bgColor  = color;
+  if(autosave){
+    save();
+  }
+}
+void CFG::setBoardMode(byte mod, bool autosave){
+  data.boardMode  = mod;
+  if(autosave){
+    save();
+  }
+}
+
+void CFG::setBright(byte b, bool autosave){
+  data.bright = b;
+  if(autosave){
+    save();
+  }
+}
+
+void CFG::setTimeZone(byte tz, bool autosave){
+  data.timeZone = tz;
   if(autosave){
     save();
   }

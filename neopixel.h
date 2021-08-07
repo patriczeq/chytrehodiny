@@ -8,16 +8,15 @@ extern "C" {
 
 #include "A_config.h"
 #include "cfg.h"
+#include "mytime.h"
 #include <Adafruit_NeoPixel.h>
 
 extern uint32_t currentTime;
-extern timeformat  myTime;
 extern void prnt(String p);
 extern void prntln(String p);
 extern void logger(String module, String message);
-extern String myTimeStr();
 extern CFG    cfg;
-
+extern MYTIME    mytime;
 
 class NeoPixel {
     public:
@@ -30,6 +29,7 @@ class NeoPixel {
       // draws
       void drawTime(uint8_t h = 0, uint8_t m = 0);
       void drawSET();
+      void setBoardMode(uint8_t bm);
       // px edit
       void setColor(uint8_t predef);
       void setColor(uint8_t r, uint8_t g, uint8_t b);
@@ -44,6 +44,8 @@ class NeoPixel {
       void setPxColor(uint8_t px, uint8_t r, uint8_t g, uint8_t b);
       void setPxColor(uint8_t px, rgb c);
       void setPxColor(uint8_t px, String hex);
+      void setBright(uint8_t b);
+      byte getBright();
       rgb getColor();
       rgb getBgColor();
       rgb getPxColor(uint8_t px);
@@ -74,6 +76,7 @@ class NeoPixel {
       Adafruit_NeoPixel pixels = NULL;
       bool ready = false;
       bool enabled = false;
+      uint8_t bright = 0;
       uint32_t lastUpdate = 0;
       uint32_t updateAt = 1000;
       rgb backColor = {0, 0, 0};

@@ -5,8 +5,6 @@ WIFI::WIFI() {}
 WIFI::~WIFI() {}
 
 HTTPClient http;
-WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, tz * 3600);
 ESP8266WebServer server(80);
 DNSServer dns;
 
@@ -15,9 +13,10 @@ void WIFI::setup() {
 
   strncpy(ap.ssid, AP_SSID, 32);
   strncpy(ap.password, AP_PWD, 64);
-  
-  
+
+  //analogWriteRange(0xFF);
   pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, 1);
 
   logger("WiFi", "Ulozena sit: \"" + getCliSSID() + "\"");
   if (getCliSSID() != "") {
@@ -29,6 +28,20 @@ void WIFI::setup() {
     setMode(ap_pbc_prevstate);
   }
   startServer();
+}
+      
+void WIFI::updateLED(){
+  if(ledMode == LED_MODES::LED_AP){
+    ledUp = !ledUp;
+  }
+  else if(ledMode == LED_MODES::LED_CONN){
+    ledUp = true;
+  }
+  else{
+    ledUp = false;
+  }
+  digitalWrite(LED_PIN, ledUp ? 0 : 1);
+  ledTime = currentTime;
 }
 
 void WIFI::pbc() {
@@ -71,15 +84,12 @@ String WIFI::getCliPWD(){
 void WIFI::setMode(uint8_t mode) {
   switch (mode) {
     case MODES::AP:
-      digitalWrite(LED_PIN, LOW);
       startAP();
       break;
     case MODES::ST:
-      digitalWrite(LED_PIN, HIGH);
       startClient();
       break;
     case MODES::OFF:
-      digitalWrite(LED_PIN, HIGH);
       WiFi.mode(WIFI_OFF);
       break;
   }
@@ -103,10 +113,14 @@ String WIFI::cfgJSON() {
   String  json = "{\n";
   json += "\"wifi_mode\": " + String(mode) + ",\n";
   json += "\"sta_ssid\": \"" + getCliSSID() + "\",\n";
-  json += "\"time\": [" + String(myTime.h) + "," + String(myTime.m) + "," + String(myTime.s) + "],\n";
-  json += "\"timezone\": " + String(tz) + ",\n";
+  json += "\"time\": [" + String(mytime.getTime().h) + "," + String(mytime.getTime().m) + "," + String(mytime.getTime().s) + "],\n";
+  json += "\"date\": [" + String(mytime.getDate().y) + "," + String(mytime.getDate().m) + "," + String(mytime.getDate().d) + "],\n";
+  json += "\"dow\": " + String(mytime.getDow()) + ",\n";
+  json += "\"dayof\": \"" + String(mytime.svatek()) + "\",\n";
+  json += "\"timezone\": " + String(mytime.getTZ()) + ",\n";
   json += "\"main_color\": [" + String(neopixel.getColor().r) + "," + String(neopixel.getColor().g) + "," + String(neopixel.getColor().b) + "],\n";
   json += "\"bg_color\": [" + String(neopixel.getBgColor().r) + "," + String(neopixel.getBgColor().g) + "," + String(neopixel.getBgColor().b) + "],\n";
+  json += "\"bright\": " + String(neopixel.getBright()) + ",\n";
   json += "\"board_mode\": " + String(neopixel.mode) + "\n}";
   return json;
 }
@@ -121,6 +135,20 @@ void WIFI::startServer() {
   server.on("/clock.js", [this]() {
     server.send(200, str(W_JS).c_str(), file_clock_js);
   });
+
+  /*favicons*/
+  server.on("/favicon.ico", [this]() {
+    server.send_P(200, str(W_ICON).c_str(), file_favicon_ico, sizeof(file_favicon_ico));
+  });
+  server.on("/favicon256.png", [this]() {
+    server.send_P(200, str(W_PNG).c_str(), file_favicon_png, sizeof(file_favicon_png));
+  });
+  server.on("/site.webmanifest", [this]() {
+    server.send(200, str(W_MANIFEST).c_str(), file_site_webmanifest);
+  });
+
+  /* gen*/
+  
   server.onNotFound([this]() {
     handleIndex();
   });
@@ -133,7 +161,7 @@ void WIFI::startServer() {
     server.send(200, str(W_JSON).c_str(), scanJSON());
   });
   server.on("/time.json", [this]() {
-    server.send(200, str(W_JSON).c_str(), "[" + String(myTime.h) + "," + String(myTime.m) + "," + String(myTime.s) + "]");
+    server.send(200, str(W_JSON).c_str(), "[" + String(mytime.getTime().h) + "," + String(mytime.getTime().m) + "," + String(mytime.getTime().s) + "]");
   });
   server.on("/pixels.json", [this]() {
     String px = "{\n\"px\":[\n";
@@ -152,14 +180,19 @@ void WIFI::startServer() {
   });
 
   server.on("/ntp", [this]() {
-    GetNtpTime();
+    mytime.GetNtpTime(server.hasArg("tz") ? server.arg("tz").toInt() : 200);
     server.send(200, str(W_JSON).c_str(), "{\"status\": \"ok\"}");
   });
 
   server.on("/apply", [this]() {
+    // board mode
+    if (server.hasArg("board_mode")){
+      neopixel.setBoardMode(server.arg("board_mode").toInt());
+      cfg.setBoardMode(server.arg("board_mode").toInt(), false);
+    }
     // time
     if (server.hasArg("time_h") && server.hasArg("time_m") && server.hasArg("time_s")) {
-      setMyTime(
+      mytime.setTime(
       timeformat({
         server.arg("time_h").toInt(),
         server.arg("time_m").toInt(),
@@ -169,7 +202,13 @@ void WIFI::startServer() {
     }
     // timezone
     if (server.hasArg("timezone")) {
-      SetNtpTZ(server.arg("timezone").toInt());
+      mytime.setTZ(server.arg("timezone").toInt());
+      cfg.setTimeZone(server.arg("timezone").toInt(), false);
+    }
+    // bright
+    if (server.hasArg("bright")) {
+      neopixel.setBright(server.arg("bright").toInt());
+      cfg.setBright(server.arg("timezone").toInt(), false);
     }
     // mainColor
     if (server.hasArg("color_r") && server.hasArg("color_g") && server.hasArg("color_b")) {
@@ -205,6 +244,10 @@ void WIFI::startServer() {
         }), false
       );
     }
+    if (server.hasArg("bright")){
+       neopixel.setBright(server.arg("bright").toInt());
+       cfg.setBright(server.arg("bright").toInt(), false);
+    }
     // wifi-cli
     if (server.hasArg("ssid") && server.hasArg("pwd")) {
       //network newnet = {server.arg("ssid").c_str(), server.arg("pwd").c_str()};
@@ -220,37 +263,6 @@ void WIFI::startServer() {
     cfg.save();
     server.send(200, str(W_JSON).c_str(), cfgJSON());
   });
-
-  /*
-      if(server.hasArg("save")){
-      cfg.save();
-    }
-    else if (server.hasArg("set") && server.hasArg("value"))
-    {
-      logger("SETTER", server.arg("set") + ": " + server.arg("value"));
-
-      if(server.arg("set") == "color")
-        {
-          neopixel.setColor(server.arg("value"));
-        }
-      else if(server.arg("set") == "tz")
-        {
-          SetNtpTZ(server.arg("value").toInt());
-        }
-      else if(server.arg("set") == "wifimode")
-        {
-          setMode(server.arg("value").toInt());
-        }
-      else if(server.arg("set") == "ssid")
-        {
-          client.ssid = server.arg("value");
-        }
-      else if(server.arg("set") == "password")
-        {
-          client.password = server.arg("value");
-        }
-    }
-  */
   logger("WiFi", "Zapinam webove rozhrani");
   server.begin();
 }
@@ -271,39 +283,6 @@ void WIFI::startClient() {
   WiFi.begin(client.ssid, client.password);
 }
 
-//time NTP sync
-void WIFI::GetNtpTime() {
-  if (mode == MODES::ST && conn)
-  {
-    logger("NTP", "Synchronizuji cas z internetu");
-    uint8_t i = 0;
-    while (!timeClient.update() && i < 3) {
-      timeClient.forceUpdate();
-      i++;
-      logger("NTP", "Pokus " + i);
-    }
-    if (i == 3) {
-      logger("NTP", "Chyba");
-    }
-    else
-    {
-      setMyTime(
-      timeformat({
-        timeClient.getHours(),
-        timeClient.getMinutes(),
-        timeClient.getSeconds()
-      })
-      );
-
-      logger("NTP", "Synchronizováno");
-    }
-  }
-}
-void WIFI::SetNtpTZ(uint8_t tz_) {
-  tz = tz_;
-  timeClient.setTimeOffset(tz * 3600);
-}
-
 void WIFI::update() {
   if (mode == MODES::ST && !conn && WiFi.status() == WL_CONNECTED)
   {
@@ -311,7 +290,10 @@ void WIFI::update() {
     MDNS.begin(HOSTNAME);
     logger("WiFi", "Pripojeno k siti\"" + getCliSSID() + "\", IP: " + WiFi.localIP().toString());
     logger("mDNS", "Adresa \"" + String(HOSTNAME) + "\"");
-    GetNtpTime();
+    mytime.GetNtpTime();
+  }
+  else if(mode == MODES::ST && conn){
+    MDNS.update();
   }
 
   // pbc
@@ -321,6 +303,20 @@ void WIFI::update() {
     logger("WiFi-PBC", "Vyprsel casovac");
     setMode(ap_pbc_prevstate);
   }
+  // led mode
+  if(mode == MODES::ST)
+    {
+      ledMode = !conn ? LED_MODES::LED_CONN : LED_MODES::LED_ST;
+    }
+  else if(mode == MODES::AP)
+    {
+      ledMode = LED_MODES::LED_AP;
+    }
+  // led
+  if((currentTime - ledTime) > 500){
+    updateLED();
+  }
+  
   dns.processNextRequest();
   server.handleClient();
 }

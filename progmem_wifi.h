@@ -11,10 +11,13 @@ const char W_XZIP[] PROGMEM = "application/x-zip";
 const char W_GZIP[] PROGMEM = "application/x-gzip";
 const char W_JSON[] PROGMEM = "application/json";
 const char W_TXT[] PROGMEM = "text/plain";
+const char W_MANIFEST[] PROGMEM = "application/manifest+json";
 
-/* index.html ============================== */
+/* index.html ============================ */
 #include "Z_index.html.h"
-/* style.css ============================== */
+/* style.css ============================= */
 #include "Z_style.css.h"
 /* clock.js ============================== */
 #include "Z_clock.js.h"
+/* site.webmanifest ====================== */
+#include "webicons.h"

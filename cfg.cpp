@@ -20,15 +20,21 @@ void CFG::setup(){
 }
 void CFG::defaults(){
   
-  data.client     = network {ST_SSID, ST_PASS};
-  data.bright     = 255;
-  data.mainColor  = rgb {255, 255, 255};
-  data.bgColor    = rgb {0, 0, 0};
-  data.timeZone   = NTP_TIMEZONE_GMT;
-  data.wifiMode   = 2;  // 1 AP, 2 ST
-  data.boardMode  = 0;
-  data.mynum      = MYNUM;
-  data.setupComplete = false;
+  this->data.client     = network {ST_SSID, ST_PASS};
+  this->data.bright     = 255;
+  this->data.mainColor  = rgb {255, 255, 255};
+  this->data.bgColor    = rgb {0, 0, 0};
+  this->data.timeZone   = NTP_TIMEZONE_GMT;
+  this->data.wifiMode   = 2;  // 1 AP, 2 ST
+  this->data.boardMode  = 0;
+  this->data.redrawMode = 0;
+  this->data.mynum      = MYNUM;
+  this->data.useSensor  = false;
+  this->data.setupComplete = false;
+  this->data.brightSchedule.enable   = false;
+  this->data.brightSchedule.from  = {0,0,0};
+  this->data.brightSchedule.to  = {0,0,0};
+  this->data.brightSchedule.bright = 255;
 }
 
 void CFG::FactoryReset(){
@@ -41,13 +47,13 @@ void CFG::FactoryReset(){
 
 /* EEPROM */
 void CFG::save(bool reboot){
-  if(!data.setupComplete){
-    data.setupComplete = true;
-    data.boardMode = 1;
+  if(!this->data.setupComplete){
+    this->data.setupComplete = true;
+    this->data.boardMode = 1;
   }
   EEPROM.begin(EEPROM_SIZE);
   saveObject(SETTINGS_ADDR, data);
-  logger("CFG", "Konfigurace byla ulozena!");
+  logger("CFG", "SAVED!");
   if(reboot){
     delay(500);
     ESP.reset();
@@ -60,83 +66,118 @@ bool CFG::load(){
   getObject(SETTINGS_ADDR, newData);
   if(newData.mynum == MYNUM)
     {
-      data = newData;
-      logger("CFG", "Konfigurace byla nactena z pameti EEPROM");
+      this->data = newData;
+      logger("CFG", "LOADED!");
       return true;
     }
-    logger("CFG", "Konfigurace nebyla nalezena. Zavadim vychozi nastaveni!");
+    logger("CFG", "NOT FOUND! LOADING DEFAULTS...");
   return false;
 }
 
 /* getters */
 
 bool CFG::setupCmplt(){
-  return data.setupComplete;
+  return this->data.setupComplete;
 }
 network CFG::getNetwork(){
-  return data.client;
+  return this->data.client;
 }
 rgb CFG::getMainColor(){
-  return data.mainColor;
+  return this->data.mainColor;
 }
 rgb CFG::getBgColor(){
-  return data.bgColor;
+  return this->data.bgColor;
 }
-byte CFG::getTimeZone(){
-  return data.timeZone;
+uint8_t CFG::getTimeZone(){
+  return this->data.timeZone;
 }
-byte CFG::getWifiMode(){
-  return data.wifiMode;
+uint8_t CFG::getWifiMode(){
+  return this->data.wifiMode;
 }
-byte CFG::getBoardMode(){
-  return data.boardMode;
+uint8_t CFG::getBoardMode(){
+  return this->data.boardMode;
 }
-byte CFG::getBright(){
-  return data.bright;
+uint8_t CFG::getRedrawMode(){
+  return this->data.redrawMode;
+}
+uint8_t CFG::getBright(){
+  return this->data.bright;
+}
+bool CFG::getSensor(){
+  return this->data.useSensor;
+}
+schedule CFG::getSchedule(){
+  return this->data.brightSchedule;
 }
 
 /* setters */
 
 void CFG::setMainColor(rgb color, bool autosave){
-  data.mainColor  = color;
+  this->data.mainColor  = color;
   if(autosave){
-    save();
+    this->save();
+  }
+}
+
+void CFG::setSchedule(schedule sch, bool autosave){
+  this->data.brightSchedule = sch;
+  if(autosave){
+    this->save();
+  }
+}
+void CFG::setSchedule(bool enable, bool autosave){
+  this->data.brightSchedule.enable = enable;
+  if(autosave){
+    this->save();
   }
 }
 
 void CFG::setBgColor(rgb color, bool autosave){
-  data.bgColor  = color;
+  this->data.bgColor  = color;
   if(autosave){
-    save();
+    this->save();
   }
 }
-void CFG::setBoardMode(byte mod, bool autosave){
-  data.boardMode  = mod;
+void CFG::setBoardMode(uint8_t mod, bool autosave){
+  this->data.boardMode  = mod;
   if(autosave){
-    save();
+    this->save();
+  }
+}
+void CFG::setRedrawMode(uint8_t mod, bool autosave){
+  this->data.redrawMode  = mod;
+  if(autosave){
+    this->save();
   }
 }
 
-void CFG::setBright(byte b, bool autosave){
-  data.bright = b;
+void CFG::setBright(uint8_t b, bool autosave){
+  this->data.bright = b;
   if(autosave){
-    save();
+    this->save();
   }
 }
 
-void CFG::setTimeZone(byte tz, bool autosave){
-  data.timeZone = tz;
+void CFG::setSensor(bool value, bool autosave){
+  this->data.useSensor = value;
   if(autosave){
-    save();
+    this->save();
+  }
+}
+
+void CFG::setTimeZone(uint8_t tz, bool autosave){
+  this->data.timeZone = tz;
+  if(autosave){
+    this->save();
   }
 }
 
 void CFG::setNetwork(network net){
-  data.client  = net;
-  save(true);
+  this->data.client  = net;
+  this->save(true);
 }
 void CFG::setNetwork(String ssid, String password){
   strncpy(data.client.ssid, ssid.c_str(), 32);
   strncpy(data.client.password, password.c_str(), 64);
-  save(true);
+  this->save(true);
 }

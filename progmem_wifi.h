@@ -19,5 +19,7 @@ const char W_MANIFEST[] PROGMEM = "application/manifest+json";
 #include "Z_style.css.h"
 /* clock.js ============================== */
 #include "Z_clock.js.h"
+/* picker.js ============================== */
+#include "Z_picker.js.h"
 /* site.webmanifest ====================== */
 #include "webicons.h"

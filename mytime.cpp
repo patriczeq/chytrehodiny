@@ -3,19 +3,91 @@ MYTIME::MYTIME() {}
 
 MYTIME::~MYTIME() {}
 
-void MYTIME::setup(datetimeformat d){
-  this->d = d.d;
-  this->t = d.t;
+void MYTIME::setup(){
+  Wire.begin();
+  Wire.setClock(100000);
+  uint8_t rtcCheck = 255;
+  this->i2cList();
+  while(rtcCheck > 0 && !this->RTC.begin()){
+    rtcCheck--;
+  }
+  if(rtcCheck > 0){
+    this->RTC.setSquareWave(SquareWaveDisable);
+    this->rtcGetDateTime();
+    this->rtcReady = true;
+    logger("RTC", "OK: " + this->getDateTimeStr());
+  }
+  else
+  {
+    logger("RTC", "ERROR: NOT FOUND!");
+    this->d = {2000, 01, 01};
+    this->t = {0, 0, 0};
+  }
   this->tz = cfg.getTimeZone();
   this->timeClient.setTimeOffset(this->tz * 3600);
 }
 void MYTIME::update(){
-  if(currentTime - updateAt > 1000)
+  if(!this->rtcReady && (currentTime - this->updateAt >= 10))
     {
-      updateAt = currentTime;
-      this->addSec();
+      this->addMillis(currentTime - this->updateAt);
+      this->updateAt = currentTime;     
+    }
+  else if(this->rtcReady && (currentTime - this->updateAt >= 1000))
+    {
+      this->rtcGetDateTime();
+      this->updateAt = currentTime;
     }
 }
+void MYTIME::i2cList(){
+    byte error, address;
+    int nDevices;
+    nDevices = 0;
+    for (address = 1; address < 127; address++ )  {
+      Wire.beginTransmission(address);
+      error = Wire.endTransmission();
+      if (error == 0) {
+        prnt(String(F("[I2C]: FOUND: 0x")));
+        if (address < 16)
+          prnt("0");
+        prntln(String(address, HEX));
+        nDevices++;
+      } else if (error == 4) {
+        prntln(String(F("[I2C]: ERROR: 0x")));
+        if (address < 16)
+          prnt("0");
+        prntln(String(address, HEX));
+      }
+    } //for loop
+    if (nDevices == 0) {
+      prntln(String(F("[I2C]: NO DEVICES FOUND!")));
+    }
+}
+
+bool MYTIME::rtcGetDateTime(){
+  datetimeformat dt;
+  uint8_t wd;
+  bool done = this->RTC.getDateTime(&dt.t.h, &dt.t.m, &dt.t.s, &dt.d.d, &dt.d.m, &dt.d.y, &wd);
+  if(done){
+    this->setDateTime(dt,false);
+  }
+  return done;
+}
+bool MYTIME::rtcSetDateTime(datetimeformat dt){
+  return this->RTC.setDateTime(this->t.h, this->t.m, this->t.s, this->d.d, this->d.m, this->d.y, this->getDow(d, true));
+}
+
+bool MYTIME::hasRTC(){
+  return this->rtcReady;
+}
+
+bool MYTIME::isBetween(timeformat from, timeformat to){
+  uint32_t _c = this->t.s + (this->t.m * 60) + (this->t.h * 3600);
+  uint32_t _f = from.s + (from.m * 60) + (from.h * 3600);
+  uint32_t _t = to.s + (to.m * 60) + (to.h * 3600);
+
+  return  (_f <= _c && _c <= _t) || (_t < _f && (_c <= _t || _c >= _f));
+}
+
 uint8_t MYTIME::getTZ(){
   return this->tz;
 }
@@ -23,8 +95,11 @@ void MYTIME::setTZ(uint8_t h){
   this->tz = h;
   this->timeClient.setTimeOffset(this->tz * 3600);
 }
-void MYTIME::GetNtpTime(byte ntz) {
-  logger("NTP", "Synchronizuji cas z internetu");
+bool MYTIME::GetNtpTime(){
+  return this->GetNtpTime(this->tz);
+}
+bool MYTIME::GetNtpTime(uint8_t ntz) {
+  logger("NTP", "BEGIN");
     uint8_t i = 0;
     if(ntz < 200){
       this->timeClient.setTimeOffset(ntz * 3600);
@@ -32,18 +107,31 @@ void MYTIME::GetNtpTime(byte ntz) {
     while (!timeClient.update() && i < 3) {
       timeClient.forceUpdate();
       i++;
-      logger("NTP", "Pokus " + i);
     }
     if (i == 3) {
-      logger("NTP", "Chyba");
+      logger("NTP", "ERROR");
+      return false;
     }
     else
     {
-      logger("NTP", timeClient.getFormattedDate());
-      this->setDateTime(timeClient.getFormattedDate());
-
-      logger("NTP", "Synchronizováno");
+      logger("NTP", "OK: " + timeClient.getFormattedDate());
+      this->setDateTime(timeClient.getFormattedDate(), true);
+      return true;
     }
+}
+
+void MYTIME::addMillis(uint32_t ms){
+  uint16_t rest = ms % 1000;
+  uint32_t secs = (ms - rest) / 1000;
+  this->t.ms += rest;
+  if(this->t.ms >= 1000){
+    this->addSec();
+    this->t.ms -= 1000;
+  }
+  while(secs){
+    this->addSec();
+    secs--;
+  }
 }
 
 void MYTIME::addSec(){
@@ -51,129 +139,88 @@ void MYTIME::addSec(){
   if(this->t.s > 59)
     {
       this->t.s = 0;
-      this->t.m++;
+      this->addMinute();
     }
-   if(this->t.m > 59)
-    {
-      this->t.m = 0;
-      this->t.h++;
-    }
-   if(this->t.h > 23){
-      this->t.h = 0;
-      this->addDay();
-   }
-
-   // DST - přepnutí na zimní čas
-
-   if(this->getDow() == 6 && this->d.m == 10 && this->d.d >= 25 && this->t.h == 3 && this->DST){
-    this->t.h = 2;
-    this->DST = false;
-   }
-
-   // DST - přepnutí na letní čas
-   if(this->getDow() == 6 && this->d.m == 3 && this->d.d >= 25 && this->t.h == 2 && !this->DST){
-    this->t.h = 3;
-    this->DST = true;
-   }
 }
-
-datetimeformat MYTIME::getDateTimeDST(){
-  datetimeformat dt = {this->d, this->t};
-  uint8_t monDays[13] = {0, 31, !(dt.d.y % 4) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-  if(!this->isDST())
-    { // mínus 1 hodina
-      if(dt.t.h >= 1)
-        {
-          dt.t.h -= 1;
-        } 
-      else
-        {
-          dt.t.h = 23;
-          if(dt.d.d > 1)
-            {
-              dt.d.d -= 1;
-            }
-          else
-            {
-              if(dt.d.m > 1)
-                {
-                  dt.d.m -= 1;
-                }
-              else
-                {
-                  dt.d.y-= 1;
-                  dt.d.m = 12;
-                  dt.d.d = 31;
-                }
-            }
-            
-        }
-    }
-  return dt;
+void MYTIME::addMinute(){
+  this->t.m++;
+  if(this->t.m > 59){
+    this->t.m = 0;
+    this->addHour();
+  }
 }
-
-bool MYTIME::isDST(){
-  dateformat startDST;
-  dateformat endDST;
-  bool startFound = false;
-  bool endFound = false;
-  for(uint8_t s = 25; s < 32; s++)
-    {
-      if(this->getDow(dateformat {this->d.y, 3, s}) == 6){
-        startDST = {this->d.y, 3, s};
-        startFound = true;
-        break;
-      }
-    }
-  for(uint8_t s = 25; s < 32; s++)
-    {
-      if(this->getDow(dateformat {this->d.y, 10, s}) == 6){
-        endDST = {this->d.y, 10, s};
-        endFound = true;
-        break;
-      }
-    }
-  return (!startFound || !endFound) ? false : (
-        (this->d.m > 3 && this->d.m < 10)                                       // jsme mezi dubnem a zářím
-        || (this->d.m == 3 && this->d.d >= startDST.d && this->t.h >= 2)      // poslední neděle v březnu ve 2 ráno - do konce měsíce
-        || (this->d.m == 10 && this->d.d <= endDST.d && this->t.h < 3)       // poslední neděle v říjnu před 3. ráno - od začátku měsíce
-        );
-}
-dateformat MYTIME::addDay(dateformat d){
-  uint8_t monDays[13] = {0, 31, !(d.y % 4) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-  d.d++;
-  if(d.d > monDays[d.m])
-    {
-      d.d = 1;
-      d.m++;
-    }
-   if(d.m > 12)
-    {
-      d.m = 1;
-      d.y++;
-    }
+void MYTIME::addHour(){
+  this->t.h++;
+  if(this->t.h > 23){
+    this->t.h = 0;
+    this->addDay();
+  }
 }
 void MYTIME::addDay(){
-  this->d = this->addDay(this->d);
+  uint8_t monDays[13] = {0, 31, !(this->d.y % 4) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+  this->d.d++;
+  if(this->d.d > monDays[d.m])
+    {
+      this->d.d = 1;
+      this->addMonth();
+    }
+}
+void MYTIME::addMonth(){
+  this->d.m++;
+  if(this->d.m > 12){
+    this->d.m = 0;
+    this->addYear();
+  }
+}
+void MYTIME::addYear(){
+  this->d.y++;
 }
 
 String MYTIME::strNum(uint16_t num){
   return num > 9 ? String(num) : String("0") + String(num);
 }
-void MYTIME::setTime(timeformat t){
+void MYTIME::setTime(timeformat t, bool toRTC){
   this->t = t;
-  logger("TIME", "Nastaven čas " + this->getTimeStr());
+  if(toRTC && this->rtcReady)
+    {
+      this->rtcSetDateTime(datetimeformat {this->d, t});
+    }
+  
 }
-void MYTIME::setDate(dateformat d){
+void MYTIME::setTime(String t, bool toRTC){
+  this->setTime(
+    timeformat {
+      t.substring(0, 2).toInt(),
+      t.substring(3, 5).toInt(),
+      t.substring(6, 8).toInt()
+    },
+    toRTC
+  );
+}
+
+void MYTIME::setDate(dateformat d, bool toRTC){
   this->d = d;
-  logger("TIME", "Nastaveno datum " + this->getDateStr());
-  logger("TIME-DST", this->isDST() ? "Letní čas" : "Zimní čas");
+  if(toRTC && this->rtcReady)
+    {
+      this->rtcSetDateTime(datetimeformat {d, this->t});
+    }
 }
-void MYTIME::setDateTime(datetimeformat d){
-  this->setDate(d.d);
-  this->setTime(d.t);
+void MYTIME::setDate(String d, bool toRTC){
+  this->setDate(
+    dateformat {
+      d.substring(0, 4).toInt(),
+      d.substring(5, 7).toInt(),
+      d.substring(8, 10).toInt(),
+    },
+    toRTC
+  );
 }
-void MYTIME::setDateTime(String d){
+
+void MYTIME::setDateTime(datetimeformat d, bool toRTC){
+  this->setDate(d.d, toRTC);
+  this->setTime(d.t, toRTC);
+}
+void MYTIME::setDateTime(String d, bool toRTC){
   this->setDateTime(
     datetimeformat {
       dateformat {
@@ -186,27 +233,33 @@ void MYTIME::setDateTime(String d){
         d.substring(14, 16).toInt(),
         d.substring(17, 19).toInt()
       }
-    }
+    },
+    toRTC
   );
 }
 
 timeformat MYTIME::getTime(){
-  return this->getDateTimeDST().t;
+  return this->t;
+}
+timeformat MYTIME::getTime(String t){
+  return timeformat {
+    t.substring(0, 2).toInt(),
+    t.substring(3, 5).toInt(),
+    t.substring(6, 8).toInt()
+  };
 }
 dateformat MYTIME::getDate(){
-  return this->getDateTimeDST().d;
+  return this->d;
 }
 datetimeformat MYTIME::getDateTime(){
-  return this->getDateTimeDST();
+  return this->getDateTime();
 }
 
 String MYTIME::getTimeStr(){
-  timeformat tt = this->getDateTimeDST().t;
-  return this->strNum(tt.h) + ":" + this->strNum(tt.m) + ":" + this->strNum(tt.s);
+  return this->strNum(this->getTime().h) + ":" + this->strNum(this->getTime().m) + ":" + this->strNum(this->getTime().s);
 }
 String MYTIME::getDateStr(){
-  dateformat dd = this->getDateTimeDST().d;
-  return String(dd.y) + "-" + this->strNum(dd.m) + "-" + this->strNum(dd.d);
+  return String(this->getDate().y) + "-" + this->strNum(this->getDate().m) + "-" + this->strNum(this->getDate().d);
 }
 String MYTIME::getDateTimeStr(){
   return this->getDateStr() + " " + this->getTimeStr();

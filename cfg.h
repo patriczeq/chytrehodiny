@@ -47,23 +47,30 @@ class CFG {
       void setNetwork(String ssid, String password);
       void setMainColor(rgb color, bool autosave = true);
       void setBgColor(rgb color, bool autosave = true);
-      void setTimeZone(byte tz, bool autosave = true);
-      void setWifiMode(byte mod, bool autosave = true);
-      void setBoardMode(byte mod, bool autosave = true);
-      void setBright(byte b, bool autosave = true);
+      void setTimeZone(uint8_t tz, bool autosave = true);
+      void setWifiMode(uint8_t mod, bool autosave = true);
+      void setBoardMode(uint8_t mod, bool autosave = true);
+      void setRedrawMode(uint8_t mod, bool autosave = true);
+      void setBright(uint8_t b, bool autosave = true);
+      void setSensor(bool value, bool autosave = true);
       void save(bool reboot = false);
       void FactoryReset();
+      void setSchedule(schedule sch, bool autosave = true);
+      void setSchedule(bool enable, bool autosave = true);
       /* getters */
       bool setupCmplt();
       bool load();
       network getNetwork();
       rgb getMainColor();
       rgb getBgColor();
-      byte getBright();
-      byte getTimeZone();
-      byte getWifiMode();
-      byte getBoardMode();
-            
+      uint8_t getBright();
+      bool    getSensor();
+      uint8_t getTimeZone();
+      uint8_t getWifiMode();
+      uint8_t getBoardMode();
+      uint8_t getRedrawMode();
+      schedule getSchedule();
+      
       
       CFG();
       ~CFG();

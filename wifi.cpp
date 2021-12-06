@@ -3,19 +3,17 @@
 WIFI::WIFI() {}
 
 WIFI::~WIFI() {}
-
-HTTPClient http;
+ESP8266WiFiMulti wifiMulti;
 DNSServer dns;
-
 
 void WIFI::setup() {
   client = cfg.getNetwork();
-
   strncpy(ap.ssid, AP_SSID, 32);
   strncpy(ap.password, AP_PWD, 64);
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, 1);
 
+  
   logger("WiFi", "SAVED NETWORK: " + getCliSSID());
   if (getCliSSID() != "") {
     ap_pbc_prevstate = MODES::ST;
@@ -55,6 +53,80 @@ void WIFI::pbc() {
     ap_pbc_start -= ap_pbc_timeout;
   }
 }
+
+bool WIFI::checkUpdate()
+  {
+    WiFiClient wificlient;
+    HTTPClient http;
+    float my_version = 0.0;
+    bool checked = false;
+    StaticJsonBuffer<100> jsonBuffer;
+
+    logger("OTA", "Current Version: " + String(cfg.currentVersion) + " ... checking update");
+    
+    if (http.begin(wificlient, String(UPDATE_CHECK).c_str())) {  // HTTP
+      int httpCode = http.GET();
+      String response = http.getString();
+      
+      logger("OTA", "HTTP GET: " + String(httpCode) + " " + response);
+
+      if (httpCode > 0) {
+        JsonObject& json = jsonBuffer.parseObject(response);
+        if(json.success()){
+          my_version = json["current"];
+          logger("OTA", "Remote Version: " + String(my_version));
+        }
+      }
+      checked = true;
+    }
+    else
+    {
+      logger("OTA", "HTTP read error!");
+    }
+    http.end();
+    if(checked && my_version > cfg.currentVersion)
+      {
+        logger("OTA", "Preparing update...");
+        cfg.remoteVersion = my_version;
+        neopixel.setWifi(4);
+        return true;
+      }
+
+    return false;
+  }
+
+
+void WIFI::doUpdate(String url)
+  {
+    uint8_t prev_neopixel_mode = neopixel.mode;
+    neopixel.setMode(199);
+    delay(10);
+    neopixel.update();
+    neopixel.draw();
+    delay(10);
+    WiFiClient wificlient;
+    fw_update_in_progress = true;
+    logger("OTA", url);
+    
+    ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
+    
+    t_httpUpdate_return ret = ESPhttpUpdate.update(wificlient, url);
+    switch (ret) {
+      case HTTP_UPDATE_FAILED:
+        Serial.printf("HTTP_UPDATE_FAILD Error (%d): %s\n", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
+        break;
+
+      case HTTP_UPDATE_NO_UPDATES:
+        Serial.println("HTTP_UPDATE_NO_UPDATES");
+        break;
+
+      case HTTP_UPDATE_OK:
+        Serial.println("HTTP_UPDATE_OK");
+        break;
+    }
+    neopixel.setMode(prev_neopixel_mode);
+    this->startServer();
+  }
 
 void WIFI::scanNetworks() {
   logger("WiFi-SCAN", "...");
@@ -110,6 +182,9 @@ String WIFI::JSONval(String v){
 String WIFI::JSONval(int v){
   return String(v);
 }
+String WIFI::JSONval(float v){
+  return String(v);
+}
 String WIFI::JSONval(bool v){
   return String(v ? "true" : "false");
 }
@@ -141,15 +216,15 @@ String WIFI::cfgJSON() {
   return this->JSONtree(
             this->JSONkey("wifi_mode",    this->JSONval(mode), true) +
             this->JSONkey("sta_ssid",     this->JSONval(getCliSSID()), true) +
+            this->JSONkey("version",      this->JSONval(cfg.currentVersion), true) +
+            this->JSONkey("remote_version",     this->JSONval(float(cfg.remoteVersion)), true) +
             this->JSONkey("time",         this->JSONval(mytime.getTime().h, mytime.getTime().m, mytime.getTime().s), true) +
             this->JSONkey("date",         this->JSONval(mytime.getDate().y, mytime.getDate().m, mytime.getDate().d), true) +
             this->JSONkey("dow",          this->JSONval(mytime.getDow()), true) +
-            this->JSONkey("dayof",        this->JSONval(mytime.svatek()), true) +
             this->JSONkey("timezone",     this->JSONval(mytime.getTZ()), true) +
             this->JSONkey("main_color",   this->JSONval(neopixel.getColor().r, neopixel.getColor().g, neopixel.getColor().b), true) +
             this->JSONkey("bg_color",     this->JSONval(neopixel.getBgColor().r, neopixel.getBgColor().g, neopixel.getBgColor().b), true) +
             this->JSONkey("bright",       this->JSONval(neopixel.getBright()), true) +
-            this->JSONkey("auto_bright",  this->JSONval(neopixel.auto_brightness), true) +
             this->JSONkey("board_mode",   this->JSONval(neopixel.mode), true) +
             this->JSONkey("redraw_mode",   this->JSONval(neopixel.rmode), true) +
             this->JSONkey("schedule",
@@ -189,7 +264,12 @@ void WIFI::handleWebSocketMessage(void *arg, uint8_t *data, size_t len, uint8_t 
     JsonObject& json = jsonBuffer.parseObject((char*)data);
     if(!json.success()){
       if (strcmp((char*)data, "getNTP") == 0) {
-        this->socket.textAll(mytime.GetNtpTime() ? this->JSONtree(this->JSONkey("time", this->JSONval(mytime.getTime().h, mytime.getTime().m, mytime.getTime().s))) : this->JSONtree(this->JSONkey("error", this->JSONval("NTP ERROR"))));
+        bool ntpsuccess = mytime.GetNtpTime();
+        if(ntpsuccess)
+          {
+            this->socket.textAll(this->JSONtree(this->JSONkey("time", this->JSONval(mytime.getTime().h, mytime.getTime().m, mytime.getTime().s))));
+          }
+        this->socket.textAll(this->JSONtree(this->JSONkey("ntp_update", this->JSONval(ntpsuccess))));
       }
       else if (strcmp((char*)data, "factoryReset") == 0) {
         cfg.FactoryReset();
@@ -204,7 +284,7 @@ void WIFI::handleWebSocketMessage(void *arg, uint8_t *data, size_t len, uint8_t 
         this->socket.textAll(this->JSONtree(this->JSONkey("display_apply", this->JSONval("ok"))));
       }
       else{
-        this->socket.textAll(this->JSONtree(this->JSONkey("error", "Unknown command: " + String((char*)data))));
+        this->socket.textAll(this->JSONtree(this->JSONkey("error", "\"Unknown command: " + String((char*)data)) + "\""));
       }
     }
     else  // settings json
@@ -214,10 +294,11 @@ void WIFI::handleWebSocketMessage(void *arg, uint8_t *data, size_t len, uint8_t 
         cfg.setBoardMode(uint8_t(json["board_mode"]), false);
         this->JSONsyncCli(id, String("board_mode"), uint16_t(neopixel.mode));
       }
-      if(json.containsKey("redraw_mode")){
-        neopixel.setRedrawMode(uint8_t(json["redraw_mode"]));
-        cfg.setRedrawMode(uint8_t(json["redraw_mode"]), false);
-        this->JSONsyncCli(id, String("redraw_mode"), uint16_t(neopixel.rmode));
+      
+      if(json.containsKey("custom_bg") && json.containsKey("cust_r") && json.containsKey("cust_g") && json.containsKey("cust_b")){
+        neopixel.setCustomBg(byte(json["custom_bg"]), rgb {byte(json["cust_r"]), byte(json["cust_g"]), byte(json["cust_b"])});
+        
+        this->JSONsyncCli(id, String("custom_bg"), true);
       }
       if(json.containsKey("time")){
         String t_time = json["time"];
@@ -252,10 +333,6 @@ void WIFI::handleWebSocketMessage(void *arg, uint8_t *data, size_t len, uint8_t 
         }
         cfg.setBright(uint8_t(json["bright"]), false);
         this->JSONsyncCli(id, String("bright"), uint16_t(neopixel.getBright()));
-      }
-      if(json.containsKey("auto_bright")){
-        neopixel.useSensor(bool(json["auto_bright"]));
-        this->JSONsyncCli(id, String("auto_bright"), neopixel.auto_brightness);
       }
       if(json.containsKey("schedule_enable")){
         cfg.setSchedule(bool(json["schedule_enable"]), true);
@@ -304,7 +381,7 @@ void WIFI::startServer() {
                   this->ARRval(WiFi.RSSI(n), true) +
                   this->ARRval(WiFi.encryptionType(n) != ENC_TYPE_NONE, true),
                   n < numNetworks - 1
-                );//String(n > 0 ? "," : "") + "[\"" + WiFi.SSID(n) + "\", " + String(WiFi.RSSI(n)) + ", " + (WiFi.encryptionType(n) == ENC_TYPE_NONE ? "false" : "true") + "]";
+                );
       }
       request->send(200, str(W_JSON).c_str(), this->ARRtree(buff));
     });
@@ -394,6 +471,10 @@ void WIFI::update() {
     if(!mytime.hasRTC()){
       mytime.GetNtpTime();
     }
+    // update
+    if(this->checkUpdate()){
+      this->doUpdate(FIRMWARE_URL);
+    }
   }
   else if(mode == MODES::ST && conn){
     MDNS.update();
@@ -423,7 +504,7 @@ void WIFI::update() {
   dns.processNextRequest();
   //server.handleClient();
   this->socket.cleanupClients();
-  if(currentTime - this->lastPxSent >= 1000){
+  if(currentTime - this->lastPxSent >= 1000 && !fw_update_in_progress){
     this->lastPxSent = currentTime;
     this->sendPixels();
   }

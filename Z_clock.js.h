@@ -19,7 +19,11 @@ export default class {
       visible: false,
       message: ""
     };
-    this.hello    = ["Dobré ráno", "Dobrý den", "Hezký večer"];
+    this.drawColor = "#fff";
+    this.custom = [];
+    for(let i = 0; i < 121; i ++){
+      this.custom.push("#000");
+    }
     this.daynames = {
           "Adam": 1224,
           "Adéla": 902,
@@ -478,6 +482,8 @@ export default class {
     };
     this.cfg = {
         wifi_mode: 1,
+        version: 0,
+        remote_version: 0,
         sta_ssid: "",
         time: [0,0,0],
         date: [2000,1,1],
@@ -500,11 +506,13 @@ export default class {
     //this.WSinit();
     this.init();
     this.loaded = false;
+
   }
   addDays(date, days){
     const ndate = new Date(Number(new Date(date)) + (days * 86400000))
     return `${ndate.getFullYear()}-${ndate.getMonth()+1 < 10 ? '0' + (ndate.getMonth()+1) : ndate.getMonth()+1}-${ndate.getDate()+1 < 10 ? '0' + (ndate.getDate()+1) : ndate.getDate()+1}`;
   }
+
   getEasterSunday (year, formatted = true) {
     const f = Math.floor,
           G = year%19,
@@ -530,16 +538,7 @@ export default class {
   loadDayInfo(){
     this.setHolidays(this.cfg.date[0]);
     let str = "";
-    if(this.cfg.time[0] <= 10){
-      str += this.hello[0];
-    }
-    else if(this.cfg.time[0] >= 17){
-      str += this.hello[2];
-    }
-    else{
-      str += this.hello[1];
-    }
-    str += `,<br>dnes je ${this.dowStr} ${this.cfg.date[2]}. ${this.monStr}`;
+    str += `${this.dowStr} ${this.cfg.date[2]}. ${this.monStr}`;
     if(this.holidays.hasOwnProperty(this.strDate))
       {
         str += `, slavíme ${this.holidays[this.strDate]}.`
@@ -556,7 +555,7 @@ export default class {
                 break;
               }
           }
-        str += ` a svátek slaví ${svatek}.`
+        str += `, svátek slaví ${svatek}.`
       }
     this.qs(".dayinfo").innerHTML = str;
   }
@@ -583,6 +582,7 @@ export default class {
     this.fetch("cfg.json")
     .then(data => {
       this.cfg = data;
+      this.qs("#verison").innerHTML = this.cfg.version
       this.cfgHtmlUpdate();
       this.qs("body").classList.add(`mode-${this.cfg.wifi_mode == 2 ? 'sta' : 'ap'}`);
       this.loadDayInfo();
@@ -645,6 +645,23 @@ export default class {
           window.hodiny.cfg.board_mode = json.board_mode;
           window.hodiny.cfgHtmlUpdate();
         }
+        if('fw_update' in json && json.fw_update == "start"){
+          this.notify("danger","Probíhá aktualizace Firmware!", 60000);
+        }
+        if('ntp_update' in json){
+          if(json.ntp_update)
+            {
+              this.notify("success", "Synchronizace byla úspěšná!", 2000);
+            }
+           else
+            {
+              this.notify("danger", "Chyba aktualizace!", 2000);
+            }
+        }
+        if('time' in json){
+          this.notify("success", "Čas byl nastaven...", 2000);
+        }
+        
         window.hodiny.lastUpdate = Number(new Date());
       };
     }
@@ -710,6 +727,7 @@ export default class {
     return `#${this.toHex(rgbarr[0])}${this.toHex(rgbarr[1])}${this.toHex(rgbarr[2])}`;
   }
   HexRgb(hex = "#000000"){
+    hex = typeof hex == "string" && hex.length == 4 ? hex + hex.substring(1) : hex;
     hex = typeof hex == "string" ? ((hex.length == 7 ? hex.substring(1) : hex).toUpperCase()) : "#000000";
     return [
       parseInt(hex.substring(0,2), 16),
@@ -721,18 +739,15 @@ export default class {
     this.qs("#status").innerHTML    = this.wifiStatus;
     this.qs("#colorselect").value   = this.rgbHex(this.cfg.main_color);
     this.qs("#modeselect").value    = this.cfg.board_mode;
-    this.qs("#redrawmode").value    = this.cfg.redraw_mode;
     this.qs("#manualtime").value    = this.strTime;
     this.qs("#manualdate").value    = this.strDate;
     this.qs("#timezone").value      = this.cfg.timezone;
     this.qs("#bright").value        = this.cfg.bright;
-    this.qs("#autobright").checked  = this.cfg.auto_bright;
     this.qs("#schedule").checked    = this.cfg.schedule.enabled;
     this.qs("#schedulebrightf").value = this.cfg.schedule.from;
     this.qs("#schedulebrightt").value = this.cfg.schedule.to;
     this.qs("#schedulebright").value = this.cfg.schedule.bright;
-    
-    
+
     
     if(this.cfg.wifi_mode !== 2){
       this.qs("#section_display").style.display = "none";
@@ -804,7 +819,11 @@ export default class {
           that.cfg.bg_color = that.HexRgb(color);
           that.wsSett({bgcolor: color});
         }, false);
-        
+        new myPicker("pencolor",color => {
+          that.drawColor = color;
+        },color => {
+          that.drawColor = color;
+        }, false);       
         this.listeners();
     }
   applySingle(key = "", value = ""){
@@ -821,12 +840,63 @@ export default class {
       return input;
     }
   }
+  drawCust(i){
+    this.custom[i] = this.custom[i] == this.drawColor ? "#000" : this.drawColor;
+    this.reDrawCust();
+    const rgb = this.HexRgb(this.custom[i]);
+    this.wsSett({custom_bg: i, cust_r: rgb[0], cust_g: rgb[1], cust_b: rgb[2]});
+  }
+  reDrawCust(){
+    const width = 256,
+        height = 256,
+        canvas = document.getElementById("drawboard"),
+        ctx = canvas.getContext("2d");
+   let x = 0,
+       y = 0;
+       ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for(let p in this.custom)
+          {
+            if(this.custom[p] !== "#000" && this.custom[p] !== "#000000"){
+              ctx.fillStyle = this.custom[p];
+              ctx.fillRect((width/11) * x, (height/11) * y, width / 11, height / 11);
+            }
+            x++;
+            if(x > 10){
+              x = 0;
+              y++;
+            }
+          }
+  }
+  get custData(){
+    let pxx = [];
+    for(let px in this.custom)
+      {
+        if(this.custom[px] !== "#000" && this.custom[px] !== "#000000")
+          {
+            let color = this.HexRgb(this.custom[px]);
+            pxx.push([px, color[0], color[1], color[2]]);
+          }
+      }
+    return pxx;
+  }
   listeners(){
     let that = this;
     this.listen(".noarea", "click", e => {
       const bcls = this.qs("body").classList;
       bcls[bcls.contains("sett") ? "remove" : "add"]("sett");
     });
+
+    this.listen(".boardClick", "click", e => {
+      const w = e.target.offsetWidth,
+            h = e.target.offsetHeight,
+            t = e.layerY - 8,
+            l = e.layerX - 8,
+            r = Math.round(t / (h / 11)),
+            c = Math.round(l / (w / 11)),
+            p = (r * 11) + c;
+         that.drawCust(p);
+    });
+    
     this.listen("#cancel", "click", e => {
       that.qs("body").classList.remove("sett");
     });
@@ -840,34 +910,20 @@ export default class {
     });
     this.listen("#modeselect", "input", e => {
       that.cfg.board_mode = Number(e.target.value);
+      this.qs(".customimg").style.display = that.cfg.board_mode == 200 ? "block" : "none";
     });
     this.listen("#modeselect", "change", e => {
       that.cfg.board_mode = Number(e.target.value);
+      this.qs(".customimg").style.display = that.cfg.board_mode == 200 ? "block" : "none";
       that.wsSett({board_mode: e.target.value});
-    });
-    this.listen("#redrawmode", "change", e => {
-      that.cfg.redraw_mode = Number(e.target.value);
-      that.wsSett({redraw_mode: e.target.value});
     });
     this.listen("#bright", "input", e => {
       that.cfg.bright = Number(e.target.value);
-      for(let cell of document.querySelectorAll(".cell"))
-        {
-          cell.style.opacity = (that.cfg.bright / 255);
-        }
        that.wsSett({bright: Number(e.target.value)});
     });
     this.listen("#bright", "change", e => {
       that.cfg.bright = Number(e.target.value);
-      for(let cell of document.querySelectorAll(".cell"))
-        {
-          cell.style.opacity = (that.cfg.bright / 255);
-        }
         that.wsSett({bright: Number(e.target.value)});
-    });
-    this.listen("#autobright", "change", e => {
-        that.cfg.auto_bright = e.target.checked;
-        that.wsSett({auto_bright: e.target.checked});
     });
     this.listen("#schedule", "change", e => {
         that.cfg.schedule.enabled = e.target.checked;
@@ -963,6 +1019,7 @@ export default class {
     this.listen("#applyTime", "click", e => {
       that.wsSett({"time": that.strTime, "date": that.strDate}); // that.cfg.time[0]
     });
+
     this.listen("#defaults", "click", e => {
       if(confirm("Opravdu chcete provést tovární nastavení?"))
         {
@@ -973,7 +1030,7 @@ export default class {
       this.wsRequest("reboot");
     });
   }
-  
+
   vykresli()
     {
       for(let p in this.pixely)

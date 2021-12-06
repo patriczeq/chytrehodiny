@@ -10,11 +10,13 @@ extern "C" {
 #include "mytime.h"
 #include "cfg.h"
 #include "neopixel.h"
-#include <ESP8266WiFi.h>
+//#include <ESP8266WiFi.h>
+#include <ESP8266WiFiMulti.h>
 #include <WiFiClient.h>
-#include <ESP8266HTTPClient.h>  // HTTP client
 #include <DNSServer.h>          // DNS server
 #include <ESP8266mDNS.h>        // mDNS
+#include <ESP8266HTTPClient.h>  // HTTP client
+#include <ESP8266httpUpdate.h>  // OTA
 
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
@@ -51,6 +53,8 @@ class WIFI {
       String getCliSSID();
       String getCliPWD();
       void updateLED();
+      bool checkUpdate();
+      bool fw_update_in_progress = false;
       WIFI();
       ~WIFI();
     private:
@@ -63,6 +67,8 @@ class WIFI {
       uint8_t ap_pbc_prevstate = MODES::OFF;
       uint8_t scanned = 0;
       bool conn = false;
+      void doUpdate(String url);
+      void update_progress(int cur, int total);
       network client;
       network ap;
       enum MODES{
@@ -88,6 +94,7 @@ class WIFI {
       void JSONsyncCli(uint8_t nid, String key, String value);
       String JSONval(String v);
       String JSONval(int v);
+      String JSONval(float v);
       String JSONval(bool v);
       String JSONval(int v1, int v2, int v3);
       String JSONkey(String k, String v, bool comma = false);

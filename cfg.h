@@ -50,9 +50,7 @@ class CFG {
       void setTimeZone(uint8_t tz, bool autosave = true);
       void setWifiMode(uint8_t mod, bool autosave = true);
       void setBoardMode(uint8_t mod, bool autosave = true);
-      void setRedrawMode(uint8_t mod, bool autosave = true);
       void setBright(uint8_t b, bool autosave = true);
-      void setSensor(bool value, bool autosave = true);
       void save(bool reboot = false);
       void FactoryReset();
       void setSchedule(schedule sch, bool autosave = true);
@@ -64,13 +62,12 @@ class CFG {
       rgb getMainColor();
       rgb getBgColor();
       uint8_t getBright();
-      bool    getSensor();
       uint8_t getTimeZone();
       uint8_t getWifiMode();
       uint8_t getBoardMode();
-      uint8_t getRedrawMode();
       schedule getSchedule();
-      
+      float remoteVersion = MYVERSION;
+      float currentVersion = MYVERSION;
       
       CFG();
       ~CFG();

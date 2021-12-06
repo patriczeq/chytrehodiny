@@ -29,13 +29,13 @@ class NeoPixel {
       void intro();
       // draws
       void drawTime(bool ineffect = false, bool disableDraw = false);
-      void drawAnalog();
+      void drawMinOrSec(bool _sec = false);
       void drawMatrix(bool v2);
       void drawFlame(bool v2);
       void drawSET();
       void setBoardMode(uint8_t bm);
-      void setRedrawMode(uint8_t rm);
       void drawHeart();
+      void drawCustom();
       // px edit
       void setColor(uint8_t predef);
       void setColor(uint8_t r, uint8_t g, uint8_t b);
@@ -77,8 +77,9 @@ class NeoPixel {
       void fillSquare(uint8_t x0, uint8_t y0, uint8_t sz, rgb color);
       void fillSquare(uint8_t x0, uint8_t y0, uint8_t sz);
 
-      void useSensor(bool bol);
-      uint8_t sensorValue();
+      void drawBigNumber(uint8_t x, uint8_t y, uint8_t n, rgb color);
+
+
       enum MOD {
         SET = 0,
         HODINY = 1,
@@ -86,8 +87,11 @@ class NeoPixel {
         MATRIX_V2 = 3,
         OHEN = 4,
         OHEN_V2 = 5,
-        ANALOG = 6,
-        SRDCE = 7
+        SRDCE = 7,
+        SECONDS = 8,
+        MINUTES = 9,
+        WIFI_JEDE = 199,
+        CUSTOM = 200
       };
       enum RMOD {
         NONE = 0,
@@ -110,7 +114,7 @@ class NeoPixel {
       };
       void setUpdate(uint32_t u = 1000); 
       uint16_t getUpdateAt();
-      bool auto_brightness = true;
+      void setCustomBg(uint8_t px, rgb color);
       NeoPixel();
       ~NeoPixel();
     private:
@@ -137,6 +141,7 @@ class NeoPixel {
       rgb backColor = {0, 0, 0};
       rgb mainColor = {0, 0, 0};
       rgb board[NUMPIXELS];
+      rgb customBG[NUMPIXELS];
       void check_bright();
       uint8_t matrix_max_frames = 0;
       bool redraw_done = true;

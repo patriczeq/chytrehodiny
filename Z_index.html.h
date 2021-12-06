@@ -57,30 +57,34 @@ const char file_index_html[] PROGMEM = R"=====(
               <select id="modeselect">
                 <option value="0" disabled>Není nastaveno</option>
                 <option value="1">Žádný</option>
-                <option value="2">Matrix</option>
-                <option value="3">Matrix v2</option>
-                <option value="4">Oheň</option>
-                <option value="5">Oheň v2</option>
-                <option value="6">Analogové hodiny</option>
+                <option value="9">Minuty na pozadí</option>
+                <option value="8">Sekundy na pozadí</option>
+                <option value="2">Matrix na pozadí</option>
+                <option value="3">Matrix</option>
+                <option value="4" disabled>Oheň  (ve vývoji) </option>
+                <option value="5" disabled>Oheň v2  (ve vývoji) </option>
                 <option value="7">Srdce</option>
+                <option value="200">Vlastní vzor</option>
              </select>
-             <hr>
-             <label for="redrawmode">Efekt překreslení</label>
-              <select id="redrawmode">
-                <option value="0">Žádný</option>
-                <option value="1">Spadnout</option>
-                <option value="2">Sklouznout</option>
-                <option value="3">Ztmavit</option>
-                <option value="4">Matrix</option>
-             </select>
-             <hr>
+             <div class="customimg" style="display: none;">
+              <div>
+                <label for="pencolor">Barva</label>
+                <input type="color" id="pencolor" class="color">
+                <input type="checkbox" id="pencolormixer" class="dropdowncheck" value="2">
+                <label for="pencolormixer" class="dropdownlabel">Namíchat</label>
+              </div>
+              <div class="boardClick">
+                <div class="img">
+                  <canvas id="drawboard" width="256px" height="256px">
+                </div>
+              </div>
+             </div>
               <div>
                 <label for="colorselect">Výchozí barva</label>
                 <input type="color" id="colorselect" class="color">
                 <input type="checkbox" id="colorselectmixer" class="dropdowncheck" value="2">
                 <label for="colorselectmixer" class="dropdownlabel">Namíchat</label>
               </div>
-              <hr>
               <div>
                 <label for="bgcolorselect">Barva pozadí</label>
                 <input type="color" id="bgcolorselect" class="color">
@@ -99,9 +103,6 @@ const char file_index_html[] PROGMEM = R"=====(
           </svg>
           <h4>Jas</h4>
           <div class="sett-card-content">
-             <label for="autobright">Automaticky:</label>
-             <input type="checkbox" id="autobright" class="hidden toggle">
-             <label for="autobright"></label>
              <input type="range" min="0" max="255" id="bright"><br>
              <label for="schedule">Rozvrh:</label>
              <input type="checkbox" id="schedule" class="hidden toggle">
@@ -197,14 +198,10 @@ const char file_index_html[] PROGMEM = R"=====(
           <svg class="icon" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 1000 1000" enable-background="new 0 0 1000 1000" xml:space="preserve">
           <g><path d="M988.8,468.2c-1.1-12.2-11.4-25.5-22.9-29.7L874,405.9c-11.5-4.1-24.3-16.9-28.3-28.5l-14.5-35.2c-5.3-11-5.3-29.1-0.1-40.2l41.8-87.8c5.3-11.1,2.9-27.6-5.3-36.7l-44.9-44.9c-9.1-8.2-25.6-10.6-36.7-5.3L698,168.9c-11.1,5.3-29.2,5.2-40.2-0.1l-35.2-14.5c-11.6-4-24.4-16.8-28.5-28.3l-32.7-91.9c-4.1-11.5-17.5-21.9-29.7-22.9c0,0-13.5-1.2-31.8-1.2c-18.3,0-31.8,1.2-31.8,1.2c-12.2,1.1-25.5,11.4-29.7,22.9L405.9,126c-4.1,11.5-16.9,24.3-28.5,28.3l-35.1,14.5c-11,5.3-29.1,5.3-40.2,0.1l-87.9-41.8c-11.1-5.3-27.6-2.9-36.7,5.3l-44.9,44.9c-8.2,9.1-10.6,25.6-5.3,36.7l41.8,87.8c5.3,11.1,5.2,29.2-0.1,40.2l-14.5,35.2c-4,11.6-16.8,24.4-28.3,28.5l-91.9,32.7c-11.5,4.1-21.9,17.5-22.9,29.7c0,0-1.2,13.5-1.2,31.8c0,18.3,1.2,31.8,1.2,31.8c1.1,12.2,11.4,25.5,22.9,29.7l92,32.7c11.5,4.1,24.3,16.9,28.3,28.5l14.5,35.2c5.3,11,5.3,29.1,0.1,40.2l-41.8,87.8c-5.3,11.1-2.9,27.6,5.3,36.7l44.9,44.9c9.1,8.2,25.6,10.6,36.7,5.3l87.8-41.8c11.1-5.3,29.2-5.2,40.2,0.1l35.2,14.5c11.6,4,24.4,16.8,28.5,28.3l32.7,92c4.1,11.5,17.5,21.8,29.7,22.9c0,0,13.5,1.2,31.7,1.2c18.3,0,31.8-1.2,31.8-1.2c12.2-1.1,25.5-11.4,29.7-22.9l32.7-92c4.1-11.5,16.9-24.3,28.5-28.3l35.2-14.5c11-5.3,29.1-5.3,40.2-0.1l87.8,41.8c11.1,5.3,27.6,2.9,36.7-5.3l44.9-44.9c8.2-9.1,10.6-25.6,5.3-36.7L831.1,698c-5.3-11.1-5.2-29.2,0.1-40.2l14.5-35.2c4-11.6,16.8-24.4,28.3-28.5l92-32.7c11.5-4.1,21.8-17.5,22.9-29.7c0,0,1.2-13.5,1.2-31.7C990,481.7,988.8,468.2,988.8,468.2z M500,722.7c-123,0-222.7-99.7-222.7-222.7c0-123,99.7-222.7,222.7-222.7c123,0,222.7,99.7,222.7,222.7C722.7,623,623,722.7,500,722.7z"/><path d="M399.8,500c0,55.4,44.9,100.2,100.2,100.2c55.4,0,100.2-44.9,100.2-100.2c0-55.4-44.9-100.2-100.2-100.2C444.6,399.8,399.8,444.6,399.8,500z"/></g>
           </svg>
-          <h4>Systém</h4>
+          <h4>Systém <span id="verison">v0</span></h4>
           <div class="sett-card-content">
              <div>
               <button id="reboot">Restartovat</button>
-              <button>
-                <label for="firmware">Aktualizovat firmware</label>
-                <input type="file" id="firmware" style="display: none;">
-              </button>
               <button id="defaults" class="factory">Tovární nastavení</button>
                 
              </div>

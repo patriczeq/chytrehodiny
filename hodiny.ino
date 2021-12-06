@@ -6,7 +6,6 @@ extern "C" {
 #include "neopixel.h"
 #include "wifi.h"
 #include "mytime.h"
-//#include "websocket.h"
 #include "src/SimpleButton/SimpleButton.h"
 
 // Run-Time Variables //
@@ -14,12 +13,10 @@ CFG       cfg;
 NeoPixel  neopixel;
 WIFI      wifi;
 MYTIME    mytime;
-//WS    ws;
 
 simplebutton::Button* btn = new simplebutton::ButtonPullup(START_BTN);
 
 uint32_t currentTime  = 0;
-uint32_t prevTime     = 0;
 
 void prnt(String p){
   Serial.print(p);
@@ -51,7 +48,7 @@ char* s2ch(String command) {
 
 void setup() {
   Serial.begin(DEBUG_BAUD);
-  delay(1000);
+  delay(10);
   logger("BOOT", "...");
   cfg.setup();
   mytime.setup();
@@ -63,6 +60,7 @@ void setup() {
 
 void loop() {
   currentTime = millis();
+  
   mytime.update();
   neopixel.update();
   wifi.update();

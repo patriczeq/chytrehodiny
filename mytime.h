@@ -37,19 +37,20 @@ class MYTIME {
       timeformat getTime(String t);
       dateformat getDate();
       datetimeformat getDateTime();
+      datetimeformat DSTdateTime(bool use = true);
       String getTimeStr();
       String getDateStr();
       String getDateTimeStr();
       String strNum(uint16_t num);
       uint8_t getDow(bool startmonday = true);
       uint8_t getDow(dateformat dd, bool startmonday = true);
-      String svatek();
       bool GetNtpTime(uint8_t ntz);
       bool GetNtpTime();
       uint8_t getTZ();
       bool hasRTC();
       void i2cList();
       bool isBetween(timeformat from, timeformat to);
+      bool isDST();
       MYTIME();
       ~MYTIME();
     private:

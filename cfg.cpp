@@ -27,9 +27,7 @@ void CFG::defaults(){
   this->data.timeZone   = NTP_TIMEZONE_GMT;
   this->data.wifiMode   = 2;  // 1 AP, 2 ST
   this->data.boardMode  = 0;
-  this->data.redrawMode = 0;
   this->data.mynum      = MYNUM;
-  this->data.useSensor  = false;
   this->data.setupComplete = false;
   this->data.brightSchedule.enable   = false;
   this->data.brightSchedule.from  = {0,0,0};
@@ -97,14 +95,8 @@ uint8_t CFG::getWifiMode(){
 uint8_t CFG::getBoardMode(){
   return this->data.boardMode;
 }
-uint8_t CFG::getRedrawMode(){
-  return this->data.redrawMode;
-}
 uint8_t CFG::getBright(){
   return this->data.bright;
-}
-bool CFG::getSensor(){
-  return this->data.useSensor;
 }
 schedule CFG::getSchedule(){
   return this->data.brightSchedule;
@@ -144,27 +136,12 @@ void CFG::setBoardMode(uint8_t mod, bool autosave){
     this->save();
   }
 }
-void CFG::setRedrawMode(uint8_t mod, bool autosave){
-  this->data.redrawMode  = mod;
-  if(autosave){
-    this->save();
-  }
-}
-
 void CFG::setBright(uint8_t b, bool autosave){
   this->data.bright = b;
   if(autosave){
     this->save();
   }
 }
-
-void CFG::setSensor(bool value, bool autosave){
-  this->data.useSensor = value;
-  if(autosave){
-    this->save();
-  }
-}
-
 void CFG::setTimeZone(uint8_t tz, bool autosave){
   this->data.timeZone = tz;
   if(autosave){

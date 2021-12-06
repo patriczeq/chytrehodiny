@@ -1,17 +1,10 @@
 const char file_style_css[] PROGMEM = R"=====(
-
-
-
-
-
-
-
 :root {
     --cell-size: calc(65vh / 11);
     --color-info: #2353ae;
     --color-success: #23ae23;
     --color-warning: #ff6c00;
-    --color-danger: )#df0f36;
+    --color-danger: #df0f36;
     --color-background: #dddddd;
     --color-background-dark: #222;
     --color-text: #111111;
@@ -47,6 +40,11 @@ a {
 label{
     cursor: pointer;
     user-select: none;
+}
+
+video{
+    background-color: #666;
+    border-radius: 8px;
 }
 
 .noarea{
@@ -96,13 +94,6 @@ label{
     background-color: var(--color-danger);
 }
 
-.loading #notify{
-    color: #fff;
-    background-color: transparent;
-    box-shadow: none;
-    opacity: 1;
-}
-
 .dayinfo{
     font-size: calc(var(--cell-size) / 2);
     font-weight: 200;
@@ -145,16 +136,31 @@ label{
     right: 50vw;
     top: var(--cell-size);
     transform: translate(50%, 0%);
-    box-shadow: 8px 8px 32px rgba(0,0,0,.5), 0 0 0 calc(var(--cell-size) / 4) rgba(255,255,255,.5);
-    border-radius: 8px;
+    box-shadow: 8px 8px 32px rgba(0,0,0,.5);
+    border-radius: 0px;
     background-color: #171717;
-    filter: brightness(2) blur(.75px);
-    transition: .4s ease-in-out filter, .4s ease-in-out transform;
+    filter: brightness(1);
+    transition: .4s ease-in-out filter, .4s ease-in-out transform, .4s ease-in-out opacity;
+    border: 4px solid #101010;
+    opacity: 1;
+}
+.hodiny::after{
+    content: "";
+    position: absolute;
+    left: calc(var(--cell-size) * -.75);
+    top: calc(var(--cell-size) * -.75);
+    width: calc(var(--cell-size) * 13);
+    height: calc(var(--cell-size) * 13);
+    background-color: rgba(255,255,255,.05);
+    background-image: linear-gradient(-45deg, transparent, rgba(255,255,255,.05));
+    z-index: 2;
+    box-shadow: 8px 8px 32px rgba(0,0,0,.2);
 }
 
 .loading .hodiny{
     filter: brightness(1) blur(0px);
     transform: translate(50%, 0%) scale(4);
+    opacity: 0;
 }
 
 #clock {
@@ -173,10 +179,32 @@ label{
     height: 100%;
 }
 
-.hodiny .pixels{
+.hodiny .pixels,
+.boardClick .img{
     clip-path: url(#boardmask);
    -webkit-clip-path: url(#boardmask);
     background-color: #000;
+    filter: brightness(4) blur(0);
+    pointer-events: none;
+}
+.boardClick{
+    position: relative;
+    width: 264px;
+    height: 264px;
+    background-color: #333;
+    margin: 16px 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.boardClick .img{
+    width: 256px;
+    height: 256px;
+    margin: 8px;
+    position: absolute;
+    left: 0;
+    top: 0;
+    filter: none;
 }
 
 .sett .hodiny {
@@ -386,9 +414,7 @@ label{
 }
 
 
-.nastaveni #autobright:checked ~ input{
-    display: none;
-}
+
 
 .nastaveni .sch{
     display: none;
@@ -634,7 +660,7 @@ label{
 
 
     .hodiny {
-        box-shadow: 8px 8px 32px rgba(0,0,0,.5), inset -8px -8px 32px rgba(255,255,255,.025), 0 0 0 calc(var(--cell-size) / 4) rgba(255,255,255,.05), 2px 2px 4px rgba(255,255,255,.05);
+        box-shadow: 8px 8px 32px rgba(0,0,0,.5);
         background-image: linear-gradient(-45deg, #0d0d0d, #060606);
     }
 
@@ -670,6 +696,4 @@ label{
         right: 50vw;
     }
 }
-
-
 )=====";

@@ -97,12 +97,17 @@ class myPicker{
               range.setAttribute("type", "range");
               light.setAttribute("type", "range");
               saturate.setAttribute("type", "range");
-              range.setAttribute("min", "1");
-              range.setAttribute("max", "359");
-              light.setAttribute("min", "1");
-              light.setAttribute("max", "99");
-              saturate.setAttribute("min", "1");
-              saturate.setAttribute("max", "99");
+              
+              range.setAttribute("min", "0.01");
+              range.setAttribute("max", "359.99");
+              light.setAttribute("min", "0.01");
+              light.setAttribute("max", "99.99");
+              saturate.setAttribute("min", "0.01");
+              saturate.setAttribute("max", "99.99");
+
+              range.setAttribute("step", "0.01");
+              light.setAttribute("step", "0.01");
+              saturate.setAttribute("step", "0.01");
               
               range.value = this.hsl[0];
               saturate.value = this.hsl[1];

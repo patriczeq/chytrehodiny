@@ -1,5 +1,6 @@
 #ifndef config_h
 #define config_h
+  #define MYVERSION 1.2
   #define PX_COLS 11
   #define PX_ROWS 11
   #define NUMPIXELS PX_COLS * PX_ROWS
@@ -11,9 +12,8 @@
   #define EEPROM_SIZE 4095
   #define MYNUM 920820
   #define FACTORY_RESET_DELAY 5000
-  #define MYVERSION 1.0
-  #define OTA_CHECK "https://project.eders.cz/wordclock/?check"
-  #define FIRMWARE_URL "https://project.eders.cz/wordclock/?download=" // ?download=NEW_VERSION
+  #define UPDATE_CHECK "http://eders.cz/hodiny/" // {"current":1}
+  #define FIRMWARE_URL "http://eders.cz/hodiny/?d" // ?d&v=VERSION
   //#define LED_MATRIX_ZIGZAG // zapojení do Z
   #define AP_SSID "Hodiny"
   #define HOSTNAME "hodiny"
@@ -54,7 +54,7 @@
   };
 
   struct schedule{
-    bool      enable;
+    bool       enable;
     timeformat from;
     timeformat to;
     uint8_t    bright;
@@ -68,9 +68,7 @@
     uint8_t   timeZone;
     uint8_t   wifiMode;
     uint8_t   boardMode;
-    uint8_t   redrawMode;
     uint32_t  mynum;
-    bool      useSensor; // autobright
     bool      setupComplete;
     schedule  brightSchedule;
   };

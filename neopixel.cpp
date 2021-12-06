@@ -8,36 +8,20 @@ void NeoPixel::setup(){
   this->enable();
   this->setColor(cfg.getMainColor());
   this->setBgColor(cfg.getBgColor());
-  this->auto_brightness = cfg.getSensor();
-  if(!this->auto_brightness){
-    this->setBright(cfg.getBright());
-  }
+  this->setBright(cfg.getBright());
   for(uint8_t i = 0; i < NUMPIXELS; i++)
     {
       this->board[i] = this->mainColor;
     }
   logger("PIXELS", "READY!");
   this->setMode(cfg.getBoardMode());
-  this->setRedrawMode(cfg.getRedrawMode());
 }
-void NeoPixel::useSensor(bool bol){
-  this->auto_brightness = bol;
-  if(!bol){ // return cfg value
-    this->setBright(cfg.getBright());
-  }
-  cfg.setSensor(bol);
-}
-uint8_t NeoPixel::sensorValue(){
-  byte value = (analogRead(A0) / 4);
-  logger("LUX", String(value));
-  return value;
-}
+
+
 void NeoPixel::check_bright(){
   this->setBright(
-    this->auto_brightness ? this->sensorValue() : (
       cfg.getSchedule().enable && mytime.isBetween(cfg.getSchedule().from, cfg.getSchedule().to) ? cfg.getSchedule().bright : 
         cfg.getBright()
-    )
   );
   this->pixels.setBrightness(this->bright);
 }
@@ -45,13 +29,26 @@ void NeoPixel::check_bright(){
 uint16_t NeoPixel::getUpdateAt(){
   return this->updateAt;
 }
+
+void NeoPixel::setCustomBg(uint8_t px, rgb color){
+  this->customBG[px] = color;
+}
+
 void NeoPixel::update(){
-  if(!this->redraw_done && currentTime - this->redraw_loop >= this->redraw_speed){
+  if(mode == MOD::WIFI_JEDE){
+    this->setPxColor(0, {255,255,255}); // wifi
+    this->setPxColor(58, {255,255,255}); // J
+    this->setPxColor(59, {255,255,255}); // E
+    this->setPxColor(60, {255,255,255}); // D
+    this->setPxColor(61, {255,255,255}); // E
+  }
+  else if(!this->redraw_done && currentTime - this->redraw_loop >= this->updateAt){
     this->runRedrawEffect();
     this->redraw_loop = currentTime;
   }
-  if(currentTime - this->lastUpdate >= this->updateAt)
+  else if(currentTime - this->lastUpdate >= this->updateAt)
     {
+      
       this->drawTime(true, true); // updateTimePxls
       switch(mode){
         case MOD::SET:
@@ -61,6 +58,14 @@ void NeoPixel::update(){
         case MOD::HODINY:
           this->updateAt = 1000;
           this->drawTime();
+          break;
+        case MOD::SECONDS:
+          this->updateAt = 250;
+          this->drawMinOrSec(true);
+          break;
+        case MOD::MINUTES:
+          this->updateAt = 250;
+          this->drawMinOrSec(false);
           break;
         case MOD::MATRIX:
         case MOD::MATRIX_V2:
@@ -72,15 +77,16 @@ void NeoPixel::update(){
           this->updateAt = 100;
           this->drawFlame(mode == MOD::OHEN_V2);
           break;
-        case MOD::ANALOG:
-          this->updateAt = 1000;
-          this->drawAnalog();
-          break;
         case MOD::SRDCE:
           this->updateAt = 1000;
           this->drawHeart();
           break;
+        case MOD::CUSTOM:
+          this->updateAt = 1000;
+          this->drawCustom();
+          break;
       }
+
       this->wifi_counter++;
       if(this->wifi_counter > 254){
         this->wifi_counter = 0;
@@ -95,11 +101,8 @@ void NeoPixel::update(){
         case WIFI_MOD::CONN:
           this->setPxColor(0, !(this->wifi_counter % 2) ? BARVY::CERNA : BARVY::ZELENA);
           break;
-        case WIFI_MOD::ST:
-          this->setPxColor(0, BARVY::CERNA);
-          break;
       }
-      
+            
       this->lastUpdate = currentTime;
       this->draw();
     }
@@ -112,9 +115,10 @@ void NeoPixel::intro(){
     pixels.clear(); // Set all pixel colors to 'off'
     for(int i=0; i<PX_ROWS; i++) { // For each pixel...
       for(int c=0; c<PX_COLS; c++){
-        pixels.setPixelColor((i * PX_ROWS) + c, pixels.Color(random(5, 255),random(5, 255),random(5, 255)));
+        pixels.setPixelColor((i * PX_ROWS) + c, pixels.Color(64,64,64));
+        pixels.show();
+        delay(5);
       }
-      pixels.show();   // Send the updated pixel colors to the hardware.
     }
     delay(1000);
     pixels.clear();
@@ -197,9 +201,6 @@ void NeoPixel::draw(){
 
 void NeoPixel::setBoardMode(uint8_t bm){
   this->mode = bm;
-}
-void NeoPixel::setRedrawMode(uint8_t rm){
-  this->rmode = rm;
 }
 
 /* helpers */
@@ -427,32 +428,63 @@ void NeoPixel::drawTime(bool ineffect, bool disableDraw){
         }
     }
 
-    /*
-      bool timePxls[NUMPIXELS];
-      bool timePxlsNew[NUMPIXELS];
-      bool timeChanged = false;
-    */
     // Aktivni px
-    for(int i=0; i < NUMPIXELS; i++)
-      {
-        this->timePxlsNew[i] = px[i] ? true : false;
-        // probehla zmena?
-        if(this->redraw_done && this->timePxls[i] != this->timePxlsNew[i])
-          {
-            this->redraw_done = false;
-          }
-      }
+    if(this->redraw_done){
+      for(int i=0; i < NUMPIXELS; i++)
+        {
+          this->timePxlsNew[i] = px[i] ? true : false;
+          // probehla zmena?
+          if(this->timePxls[i] != this->timePxlsNew[i])
+            {
+              this->redraw_done = false;
+            }
+        }
+    }
 
     for(int i=0; i < NUMPIXELS; i++)
       {
         if(!ineffect && !disableDraw){
           this->setPxColor(i, this->timePxls[i] ? this->mainColor : this->backColor);
         }
-        else if(ineffect && this->timePxls[i]  && !disableDraw && this->redraw_done)
+        else if(ineffect && this->timePxls[i]  && !disableDraw)
         {
           this->setPxColor(i, mainColor);
         }
       }
+}
+
+
+
+void NeoPixel::drawBigNumber(uint8_t x, uint8_t y, uint8_t n, rgb color){
+  if(n >= 0 && n < 10){
+    for(int im=0; im < pgm_read_byte(&(bignum_sizes[n])); im++)
+      {
+        this->setPxColor(((pgm_read_byte(&(pole_bignum[n][im])) + x) - 22) + (y * 11), color);
+      }
+  }
+}
+
+
+void NeoPixel::drawMinOrSec(bool _sec){
+  uint8_t n = _sec ? mytime.getTime().s : mytime.getTime().m;
+  uint8_t f = n < 10 ? 0 : ((n - (n % 10))/10);
+  uint8_t s = n % 10;
+
+  for(int i=0; i < NUMPIXELS; i++)
+  {
+    this->setPxColor(i, rgb {0, 0, 0});
+  }
+  
+  this->drawBigNumber(0, 2, f, this->backColor);
+  this->drawBigNumber(6, 2, s, this->backColor);
+  this->drawTime(true);
+
+}
+
+void NeoPixel::drawCustom(){
+  for(byte px = 0; px < NUMPIXELS; px++){
+    this->setPxColor(px, this->timePxls[px] ? this->mainColor : this->customBG[px]);
+  }
 }
 
 void NeoPixel::runRedrawEffect(){
@@ -462,36 +494,19 @@ void NeoPixel::runRedrawEffect(){
       this->redraw_done = true;
       break;
     case RMOD::FALL:
-      this->redraw_speed = 250;
-      for(byte col = 0; col < 11; col++)
-        {
-          byte px = col * (this->redraw_frame + 1);
-          if(this->timePxls[px])
-            {
-              this->setPxColor(px, this->backColor);
-              this->timePxls[px] = false;
-              /*if(px + 11 < NUMPIXELS)
-                {*/
-                  this->timePxls[px + 11] = true;
-                  this->setPxColor(px + 11, this->mainColor);
-                //}
-            }
+      for(byte px = 0; px < NUMPIXELS; px++){
+        if(this->timePxls[px]){
+          this->timePxls[px] = false;
+          if(px + 11 < NUMPIXELS){
+            this->timePxls[px + 11] = true;
+          }
         }
-        this->draw();
+      }
         this->redraw_frame++;
         if(this->redraw_frame == 11){
           this->redraw_frame = 0;
           this->redraw_done = true;
         }
-      break;
-    case RMOD::SLIDE:
-
-      break;
-    case RMOD::FADE:
-
-      break;
-    case RMOD::MATRIX_R:
-
       break;
   }
   if(this->redraw_done)
@@ -501,173 +516,6 @@ void NeoPixel::runRedrawEffect(){
         this->timePxls[i] = this->timePxlsNew[i];
       }
     }
-}
-void NeoPixel::drawAnalog(){
-  uint8_t h = mytime.getTime().h;
-  uint8_t m = mytime.getTime().m;
-  uint8_t s = mytime.getTime().s;
-  
-  h = h >= 12 ? h - 12 : h;
-  uint8_t circle[32] = {5,6,7,8,20,32,43,54,65,76,87,98,108,118,117,116,115,114,113,112,100,88,77,66,55,44,33,22,12,2,3,4};
-  uint8_t hour_line[3] = {49,38,27};
-  uint8_t minute_line[4] = {49,38,27,16};
-  for(int i=0; i < NUMPIXELS; i++)
-  {
-    setPxColor(i, backColor);
-  }
-
-  if(m < 10){
-    minute_line[0] = 29;
-    minute_line[1] = 40;
-    minute_line[2] = 50;
-    minute_line[3] = 19; // 1
-  }
-  else if(m < 15){
-    minute_line[0] = 50;
-    minute_line[1] = 40;
-    minute_line[2] = 41;
-    minute_line[3] = 31; // 2
-  }
-  else if(m < 20){
-    minute_line[0] = 61;
-    minute_line[1] = 62;
-    minute_line[2] = 63;
-    minute_line[3] = 64; // 3
-  }
-  else if(m < 25){
-    minute_line[0] = 72;
-    minute_line[1] = 73;
-    minute_line[2] = 85;
-    minute_line[3] = 86; // 4
-  }
-  else if(m < 30){
-    minute_line[0] = 72;
-    minute_line[1] = 83;
-    minute_line[2] = 95;
-    minute_line[3] = 107; // 5
-  }
-  else if(m < 35){
-    minute_line[0] = 71;
-    minute_line[1] = 82;
-    minute_line[2] = 93;
-    minute_line[3] = 104; // 6
-  }
-  else if(m < 40){
-    minute_line[0] = 70;
-    minute_line[1] = 81;
-    minute_line[2] = 91;
-    minute_line[3] = 101; // 7
-  }
-  else if(m < 45){
-    minute_line[0] = 70;
-    minute_line[1] = 69;
-    minute_line[2] = 79;
-    minute_line[3] = 78; // 8
-  }
-  else if(m < 50){
-    minute_line[0] = 57;
-    minute_line[1] = 58;
-    minute_line[2] = 59;
-    minute_line[3] = 56; // 9
-  }
-  else if(m < 55){
-    minute_line[0] = 48;
-    minute_line[1] = 47;
-    minute_line[2] = 35;
-    minute_line[3] = 23; // 10
-  }
-  else if(m >= 55){
-    minute_line[0] = 48;
-    minute_line[1] = 37;
-    minute_line[2] = 25;
-    minute_line[3] = 13; // 11
-  }
-  
-  if(h == 1)
-  {
-    hour_line[0] = 29;
-    hour_line[1] = 40;
-    hour_line[2] = 50;
-  }
-  else if(h == 2)
-  {
-    hour_line[0] = 50;
-    hour_line[1] = 40;
-    hour_line[2] = 41;
-  }
-  else if(h == 3)
-  {
-    hour_line[0] = 61;
-    hour_line[1] = 62;
-    hour_line[2] = 63;
-  }
-  else if(h == 4)
-  {
-    hour_line[0] = 72;
-    hour_line[1] = 73;
-    hour_line[2] = 85;
-  }
-  else if(h == 5)
-  {
-    hour_line[0] = 72;
-    hour_line[1] = 83;
-    hour_line[2] = 95;
-  }
-  else if(h == 6)
-  {
-    hour_line[0] = 71;
-    hour_line[1] = 82;
-    hour_line[2] = 93;
-  }
-  else if(h == 7)
-  {
-    hour_line[0] = 70;
-    hour_line[1] = 81;
-    hour_line[2] = 91;
-  }
-  else if(h == 8)
-  {
-    hour_line[0] = 70;
-    hour_line[1] = 69;
-    hour_line[2] = 79;
-  }
-  else if(h == 9)
-  {
-    hour_line[0] = 57;
-    hour_line[1] = 58;
-    hour_line[2] = 59;
-  }
-  else if(h == 10)
-  {
-    hour_line[0] = 48;
-    hour_line[1] = 47;
-    hour_line[2] = 35;
-  }
-  else if(h == 11)
-  {
-    hour_line[0] = 48;
-    hour_line[1] = 37;
-    hour_line[2] = 25;
-  }
-
-  //obrys
-  setPxColor(60, mainColor);
-  for(uint8_t c = 0; c < 32; c++){
-    setPxColor(circle[c], mainColor);
-  }
-  // hodinova rucicka
-  setPxColor(hour_line[0], BARVY::CERVENA);
-  setPxColor(hour_line[1], BARVY::CERVENA);
-  setPxColor(hour_line[2], BARVY::CERVENA);
-  // minutova rucicka
-  setPxColor(minute_line[0], BARVY::BILA);
-  setPxColor(minute_line[1], BARVY::BILA);
-  setPxColor(minute_line[2], BARVY::BILA);
-  setPxColor(minute_line[3], BARVY::BILA);
-
-  //1.875
-  // vteriny
-  setPxColor(circle[ byte(round( s / 1.875 )) ], BARVY::ZELENA);
 }
 
 void NeoPixel::drawSET(){

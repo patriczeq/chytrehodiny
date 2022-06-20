@@ -491,6 +491,7 @@ export default class {
         main_color: [255,255,255],
         bg_color: [0,0,0],
         bright: 0,
+        speed: 100,
         board_mode: 0
     };
     this.activePixels = [];
@@ -641,6 +642,10 @@ export default class {
           window.hodiny.cfg.bright = window.hodiny.HexRgb(json.bright);
           window.hodiny.cfgHtmlUpdate();
         }
+        if('speed' in json){
+          window.hodiny.cfg.speed = window.hodiny.HexRgb(json.speed);
+          window.hodiny.cfgHtmlUpdate();
+        }
         if('board_mode' in json){
           window.hodiny.cfg.board_mode = json.board_mode;
           window.hodiny.cfgHtmlUpdate();
@@ -743,6 +748,7 @@ export default class {
     this.qs("#manualdate").value    = this.strDate;
     this.qs("#timezone").value      = this.cfg.timezone;
     this.qs("#bright").value        = this.cfg.bright;
+    this.qs("#speed").value        = this.cfg.speed;
     this.qs("#schedule").checked    = this.cfg.schedule.enabled;
     this.qs("#schedulebrightf").value = this.cfg.schedule.from;
     this.qs("#schedulebrightt").value = this.cfg.schedule.to;
@@ -924,6 +930,14 @@ export default class {
     this.listen("#bright", "change", e => {
       that.cfg.bright = Number(e.target.value);
         that.wsSett({bright: Number(e.target.value)});
+    });
+    this.listen("#speed", "input", e => {
+      that.cfg.speed = Number(e.target.value);
+       that.wsSett({speed: Number(e.target.value)});
+    });
+    this.listen("#speed", "change", e => {
+      that.cfg.speed = Number(e.target.value);
+       that.wsSett({speed: Number(e.target.value)});
     });
     this.listen("#schedule", "change", e => {
         that.cfg.schedule.enabled = e.target.checked;

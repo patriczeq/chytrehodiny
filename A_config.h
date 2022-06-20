@@ -1,6 +1,6 @@
 #ifndef config_h
 #define config_h
-  #define MYVERSION 1.2
+  #define MYVERSION 1.55
   #define PX_COLS 11
   #define PX_ROWS 11
   #define NUMPIXELS PX_COLS * PX_ROWS
@@ -13,7 +13,7 @@
   #define MYNUM 920820
   #define FACTORY_RESET_DELAY 5000
   #define UPDATE_CHECK "http://eders.cz/hodiny/" // {"current":1}
-  #define FIRMWARE_URL "http://eders.cz/hodiny/?d" // ?d&v=VERSION
+  #define FIRMWARE_URL "http://eders.cz/hodiny/?d" // ?d&v=VERSION 
   //#define LED_MATRIX_ZIGZAG // zapojení do Z
   #define AP_SSID "Hodiny"
   #define HOSTNAME "hodiny"
@@ -23,6 +23,14 @@
   #define ST_PASS "" 
   struct map_colrow{
     uint8_t px[PX_COLS];
+  };
+  struct pxCoor{
+    uint8_t x;
+    uint8_t y;
+  };
+  struct pxChar{
+    uint8_t len;
+    const pxCoor* px;
   };
   struct network{
     char ssid[33];
@@ -65,6 +73,7 @@
     rgb       mainColor;
     rgb       bgColor;
     uint8_t   bright;
+    uint8_t   speed;
     uint8_t   timeZone;
     uint8_t   wifiMode;
     uint8_t   boardMode;

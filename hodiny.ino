@@ -39,12 +39,6 @@ String str(const char* ptr) {
   return String(keyword);
 }
 
-char* s2ch(String command) {
-  if (command.length() != 0) {
-    char *p = const_cast<char*>(command.c_str());
-    return p;
-  }
-}
 
 void setup() {
   Serial.begin(DEBUG_BAUD);

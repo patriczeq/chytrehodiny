@@ -66,6 +66,10 @@ const char file_index_html[] PROGMEM = R"=====(
                 <option value="7">Srdce</option>
                 <option value="200">Vlastní vzor</option>
              </select>
+              <div>
+                <label for="speed">Rychlost efektu</label>
+                <input type="range" min="1" max="200" id="speed">
+              </div>
              <div class="customimg" style="display: none;">
               <div>
                 <label for="pencolor">Barva</label>
@@ -91,6 +95,8 @@ const char file_index_html[] PROGMEM = R"=====(
                 <input type="checkbox" id="bgcolorselectmixer" class="dropdowncheck" value="2">
                 <label for="bgcolorselectmixer" class="dropdownlabel">Namíchat</label>
               </div>
+
+              
             </div>
           </div>
           <div class="sett-card-actions">

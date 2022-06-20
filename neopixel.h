@@ -27,6 +27,7 @@ class NeoPixel {
       void disable();
       void toggle();
       void intro();
+      bool isOffline = true;
       // draws
       void drawTime(bool ineffect = false, bool disableDraw = false);
       void drawMinOrSec(bool _sec = false);
@@ -35,6 +36,7 @@ class NeoPixel {
       void drawSET();
       void setBoardMode(uint8_t bm);
       void drawHeart();
+      void drawIP();
       void drawCustom();
       // px edit
       void setColor(uint8_t predef);
@@ -54,6 +56,8 @@ class NeoPixel {
       void fadePx(uint8_t px, uint8_t dec);
       void setBright(uint8_t b);
       uint8_t getBright();
+      void setSpeed(uint8_t s);
+      uint8_t getSpeed();
       rgb getColor();
       rgb getBgColor();
       rgb getPxColor(uint8_t px);
@@ -79,6 +83,8 @@ class NeoPixel {
 
       void drawBigNumber(uint8_t x, uint8_t y, uint8_t n, rgb color);
 
+      void singleNumberPrint(uint8_t n, rgb color = {255, 255, 255});
+      //void drawChar(String c, uint8_t x = 3, uint8_t y = 2, rgb color = {255, 255, 255});
 
       enum MOD {
         SET = 0,
@@ -90,6 +96,7 @@ class NeoPixel {
         SRDCE = 7,
         SECONDS = 8,
         MINUTES = 9,
+        SHOWIP = 10,
         WIFI_JEDE = 199,
         CUSTOM = 200
       };
@@ -115,6 +122,7 @@ class NeoPixel {
       void setUpdate(uint32_t u = 1000); 
       uint16_t getUpdateAt();
       void setCustomBg(uint8_t px, rgb color);
+      String strIP = "0.0.0.0";
       NeoPixel();
       ~NeoPixel();
     private:
@@ -134,10 +142,12 @@ class NeoPixel {
       bool ready = false;
       bool enabled = false;
       uint8_t bright = 0;
+      uint8_t speed = 100;
       uint32_t lastUpdate = 0;
       uint32_t updateAt = 500;
       uint32_t effect_slide = 0;
       uint32_t effect_speed = 500;
+      uint8_t ipprintpos = 0;
       rgb backColor = {0, 0, 0};
       rgb mainColor = {0, 0, 0};
       rgb board[NUMPIXELS];

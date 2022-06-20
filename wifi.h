@@ -4,13 +4,13 @@
 #include "Arduino.h"
 extern "C" {
   #include "user_interface.h"
+  #include <lwip/icmp.h> // needed for icmp packet definitions
 }
 
 #include "A_config.h"
 #include "mytime.h"
 #include "cfg.h"
 #include "neopixel.h"
-//#include <ESP8266WiFi.h>
 #include <ESP8266WiFiMulti.h>
 #include <WiFiClient.h>
 #include <DNSServer.h>          // DNS server
@@ -21,6 +21,8 @@ extern "C" {
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
+
+#include "src/AsyncPing-master/src/AsyncPing.h"
 
 extern uint32_t currentTime;
 extern void prnt(String p);
@@ -85,6 +87,7 @@ class WIFI {
       AsyncWebSocket socket = AsyncWebSocket("/socket");
       AsyncWebServer server = AsyncWebServer(80);
       uint32_t lastPxSent = 0;
+      uint32_t lastPingCheck = 0;
       void sendPixels();
       void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len);
       void handleWebSocketMessage(void *arg, uint8_t *data, size_t len, uint8_t id);
@@ -107,5 +110,7 @@ class WIFI {
       bool ledUp = true;
       uint32_t ledTime = 0;
       uint8_t mode = cfg.getWifiMode();
+      AsyncPing ping;
+      IPAddress GoogleDNS = IPAddress(8,8,8,8);
  };
  #endif

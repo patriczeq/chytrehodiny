@@ -9,6 +9,7 @@ void NeoPixel::setup(){
   this->setColor(cfg.getMainColor());
   this->setBgColor(cfg.getBgColor());
   this->setBright(cfg.getBright());
+  this->setSpeed(cfg.getSpeed());
   for(uint8_t i = 0; i < NUMPIXELS; i++)
     {
       this->board[i] = this->mainColor;
@@ -35,6 +36,9 @@ void NeoPixel::setCustomBg(uint8_t px, rgb color){
 }
 
 void NeoPixel::update(){
+  // update Muxer
+  uint16_t updt = float(float(this->updateAt / 100) * (201 - this->speed));
+  
   if(mode == MOD::WIFI_JEDE){
     this->setPxColor(0, {255,255,255}); // wifi
     this->setPxColor(58, {255,255,255}); // J
@@ -42,11 +46,11 @@ void NeoPixel::update(){
     this->setPxColor(60, {255,255,255}); // D
     this->setPxColor(61, {255,255,255}); // E
   }
-  else if(!this->redraw_done && currentTime - this->redraw_loop >= this->updateAt){
+  else if(!this->redraw_done && currentTime - this->redraw_loop >= updt){
     this->runRedrawEffect();
     this->redraw_loop = currentTime;
   }
-  else if(currentTime - this->lastUpdate >= this->updateAt)
+  else if(currentTime - this->lastUpdate >= updt)
     {
       
       this->drawTime(true, true); // updateTimePxls
@@ -81,6 +85,14 @@ void NeoPixel::update(){
           this->updateAt = 1000;
           this->drawHeart();
           break;
+        case MOD::SHOWIP:
+          this->updateAt = 1000;
+          this->drawIP();
+          if(this->ipprintpos == 100)
+            {
+              this->setMode(cfg.getBoardMode());
+            }
+          break;
         case MOD::CUSTOM:
           this->updateAt = 1000;
           this->drawCustom();
@@ -101,11 +113,35 @@ void NeoPixel::update(){
         case WIFI_MOD::CONN:
           this->setPxColor(0, !(this->wifi_counter % 2) ? BARVY::CERNA : BARVY::ZELENA);
           break;
+        default:
+          if(this->isOffline){
+            this->setPxColor(0, BARVY::ZLUTA);
+          }
+          break;
       }
             
       this->lastUpdate = currentTime;
       this->draw();
     }
+}
+void NeoPixel::drawIP(){
+  String ch = this->strIP.substring(ipprintpos, ipprintpos + 1);
+  for(byte px = 0; px < NUMPIXELS; px++){
+    this->setPxColor(px, {0, 0, 0});
+  }
+  
+  if(ch == ".")
+    {
+      this->setPxColor(0, {255, 255, 255});
+    }
+  else
+    {
+      this->singleNumberPrint(ch.toInt(), {255, 255, 255});
+    }
+  ipprintpos++;
+  if(ipprintpos > this->strIP.length()){
+    ipprintpos = 100;
+  }
 }
 
 void NeoPixel::setWifi(uint8_t m){
@@ -163,6 +199,12 @@ void NeoPixel::setBright(uint8_t b){
 }
 uint8_t NeoPixel::getBright(){
   return this->bright;
+}
+void NeoPixel::setSpeed(uint8_t s){
+  this->speed = s;
+}
+uint8_t NeoPixel::getSpeed(){
+  return this->speed;
 }
 void NeoPixel::fadePx(uint8_t px, uint8_t dec){
   rgb color   = getPxColor(px);
@@ -241,7 +283,7 @@ void NeoPixel::setColor(uint8_t predef){
       case BARVY::CERVENA:  this->setColor(255,  0,  0);break;
       case BARVY::ZELENA:   this->setColor(  0,255,  0);break;
       case BARVY::MODRA:    this->setColor(  0,  0,255);break;
-      case BARVY::ZLUTA:    this->setColor(255,255,255);break;
+      case BARVY::ZLUTA:    this->setColor(255,167,0);break;
       case BARVY::FIALOVA:  this->setColor(255,  0,255);break;
       case BARVY::AZUROVA:  this->setColor(  0,255,255);break;
       case BARVY::BILA:     this->setColor(255,255,255);break;
@@ -267,7 +309,7 @@ void NeoPixel::setBgColor(uint8_t predef){
       case BARVY::CERVENA:  this->setBgColor(255,  0,  0);break;
       case BARVY::ZELENA:   this->setBgColor(  0,255,  0);break;
       case BARVY::MODRA:    this->setBgColor(  0,  0,255);break;
-      case BARVY::ZLUTA:    this->setBgColor(255,255,255);break;
+      case BARVY::ZLUTA:    this->setBgColor(255,167,0);break;
       case BARVY::FIALOVA:  this->setBgColor(255,  0,255);break;
       case BARVY::AZUROVA:  this->setBgColor(  0,255,255);break;
       case BARVY::BILA:     this->setBgColor(255,255,255);break;
@@ -314,11 +356,12 @@ void NeoPixel::fillSquare(uint8_t x0, uint8_t y0, uint8_t sz, rgb color) {
 void NeoPixel::setPxColor(uint8_t px, uint8_t predef){
   switch(predef)
     {
+      default:     this->setPxColor(px,255,255,255);break;
       case BARVY::CERNA:    this->setPxColor(px,  0,  0,  0);break;
       case BARVY::CERVENA:  this->setPxColor(px,255,  0,  0);break;
       case BARVY::ZELENA:   this->setPxColor(px,  0,255,  0);break;
       case BARVY::MODRA:    this->setPxColor(px,  0,  0,255);break;
-      case BARVY::ZLUTA:    this->setPxColor(px,255,255,255);break;
+      case BARVY::ZLUTA:    this->setPxColor(px,255,167,0);break;
       case BARVY::FIALOVA:  this->setPxColor(px,255,  0,255);break;
       case BARVY::AZUROVA:  this->setPxColor(px,  0,255,255);break;
       case BARVY::BILA:     this->setPxColor(px,255,255,255);break;
@@ -437,6 +480,7 @@ void NeoPixel::drawTime(bool ineffect, bool disableDraw){
           if(this->timePxls[i] != this->timePxlsNew[i])
             {
               this->redraw_done = false;
+              break;
             }
         }
     }
@@ -454,13 +498,48 @@ void NeoPixel::drawTime(bool ineffect, bool disableDraw){
 }
 
 
+void NeoPixel::singleNumberPrint(uint8_t n, rgb color){
+  // HODIN
+  if(n == 0)
+    {
+      this->setPxColor(95, color);
+      this->setPxColor(96, color);
+      this->setPxColor(97, color);
+      this->setPxColor(98, color);
+    }
+  else
+    {
+      for(int i=0; i < pgm_read_byte(&(pole_hodin_sizes[n])); i++)
+        {
+          this->setPxColor(pgm_read_byte(&(pole_hodin[n][i])), color);
+        }
+    }
+  
+}
+/*void NeoPixel::drawChar(String c, uint8_t x, uint8_t y, rgb color)
+  {
+    uint8_t index = 0;
+    if(c == "0" || c == "1" || c == "2" || c == "3" || c == "4" || c == "5" || c == "6" || c == "7" || c == "8" || c == "9")
+      {
+        index = c.toInt();
+      }
 
+    for(int im=0; im < pgm_read_byte(&(pxChars[index].len)); im++)
+      {
+        uint8_t pxX = pgm_read_byte(&(pxChars[index].px[im].x));
+        uint8_t pxY = pgm_read_byte(&(pxChars[index].px[im].y));
+        
+        this->setPxColor((pxY * 11) + pxX, color);
+      }
+  }
+*/
 void NeoPixel::drawBigNumber(uint8_t x, uint8_t y, uint8_t n, rgb color){
   if(n >= 0 && n < 10){
     for(int im=0; im < pgm_read_byte(&(bignum_sizes[n])); im++)
       {
         this->setPxColor(((pgm_read_byte(&(pole_bignum[n][im])) + x) - 22) + (y * 11), color);
       }
+    //this->drawChar(String(n), x, y, color);
   }
 }
 
@@ -565,16 +644,16 @@ void NeoPixel::drawMatrix(bool v2){
   }
   for(int i=1; i < NUMPIXELS; i++)
   {
-    fadePx(i, timePxls[i] && v2 ? 0 : 2);
+    fadePx(i, timePxls[i] && v2 ? 0 : 4);
   }
   for(uint8_t c = 0; c < PX_COLS; c++){
     matrix_rain_pos[c] += matrix_rain_pos[c] <  matrix_rain_len[c] ? random(1,2) : 0;
     map_colrow cc = col(c);
     for(uint8_t ccc = 0; ccc < matrix_rain_pos[c]; ccc++){
       int ci = (16 - matrix_rain_pos[c]) + ccc;
-      if(!timePxls[cc.px[ccc]]){
+      if(!v2 && ccc < NUMPIXELS && !timePxls[cc.px[ccc]]){
         setPxColor(cc.px[ccc], cclrs[ci < 0 ? 0 : (ci > 15 ? 15 : ci)]);
-      }else if(v2){
+      }else if(v2 && ccc < NUMPIXELS){
         setPxColor(cc.px[ccc], ci == 15 ? cclrs[15] : rgb {55, cclrs[ci < 0 ? 0 : (ci > 15 ? 15 : ci)].g + (64 - effect_slide) , 55});
       }
     }

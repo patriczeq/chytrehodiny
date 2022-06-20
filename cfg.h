@@ -9,16 +9,16 @@ extern "C" {
 
 #ifndef NTP_TIMEZONE_GMT
   #define NTP_TIMEZONE_GMT 0
-#endif;
+#endif
 #ifndef AP_SSID
   #define AP_SSID "Chytré hodiny"
-#endif;
+#endif
 #ifndef AP_PWD
   #define AP_PWD ""
-#endif;
+#endif
 #ifndef HOSTNAME
   #define HOSTNAME "chytrehodiny"
-#endif;
+#endif
 
 /*
 struct cfgObject{
@@ -35,7 +35,7 @@ struct cfgObject{
 */
 
 #include "A_config.h"
-extern char* s2ch(String command);
+
 extern void logger(String module, String message);
 
 class CFG {
@@ -51,6 +51,7 @@ class CFG {
       void setWifiMode(uint8_t mod, bool autosave = true);
       void setBoardMode(uint8_t mod, bool autosave = true);
       void setBright(uint8_t b, bool autosave = true);
+      void setSpeed(uint8_t s, bool autosave = true);
       void save(bool reboot = false);
       void FactoryReset();
       void setSchedule(schedule sch, bool autosave = true);
@@ -62,6 +63,7 @@ class CFG {
       rgb getMainColor();
       rgb getBgColor();
       uint8_t getBright();
+      uint8_t getSpeed();
       uint8_t getTimeZone();
       uint8_t getWifiMode();
       uint8_t getBoardMode();

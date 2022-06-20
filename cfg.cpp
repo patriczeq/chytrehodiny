@@ -22,6 +22,7 @@ void CFG::defaults(){
   
   this->data.client     = network {ST_SSID, ST_PASS};
   this->data.bright     = 255;
+  this->data.speed      = 100;
   this->data.mainColor  = rgb {255, 255, 255};
   this->data.bgColor    = rgb {0, 0, 0};
   this->data.timeZone   = NTP_TIMEZONE_GMT;
@@ -98,6 +99,9 @@ uint8_t CFG::getBoardMode(){
 uint8_t CFG::getBright(){
   return this->data.bright;
 }
+uint8_t CFG::getSpeed(){
+  return this->data.speed;
+}
 schedule CFG::getSchedule(){
   return this->data.brightSchedule;
 }
@@ -138,6 +142,12 @@ void CFG::setBoardMode(uint8_t mod, bool autosave){
 }
 void CFG::setBright(uint8_t b, bool autosave){
   this->data.bright = b;
+  if(autosave){
+    this->save();
+  }
+}
+void CFG::setSpeed(uint8_t s, bool autosave){
+  this->data.speed = s;
   if(autosave){
     this->save();
   }

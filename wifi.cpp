@@ -23,8 +23,32 @@ void WIFI::setup() {
   {
     setMode(ap_pbc_prevstate);
   }
+
+  this->ping.on(true, [this](const AsyncPingResponse& response) {
+         if (response.answer)
+         {
+          neopixel.isOffline = false;
+         }
+         else
+         {
+          neopixel.isOffline = true;
+         }
+      return true;
+    });
+   this->ping.on(false, [this](const AsyncPingResponse& response) {
+         if (response.answer)
+         {
+          neopixel.isOffline = false;
+         }
+         else
+         {
+          neopixel.isOffline = true;
+         }
+      return true;
+    });
   startServer();
 }
+
       
 void WIFI::updateLED(){
   if(ledMode == LED_MODES::LED_AP){
@@ -58,7 +82,8 @@ bool WIFI::checkUpdate()
   {
     WiFiClient wificlient;
     HTTPClient http;
-    float my_version = 0.0;
+    float my_version = 0.00;
+    int v_diff = 0;
     bool checked = false;
     StaticJsonBuffer<100> jsonBuffer;
 
@@ -84,10 +109,15 @@ bool WIFI::checkUpdate()
       logger("OTA", "HTTP read error!");
     }
     http.end();
-    if(checked && my_version > cfg.currentVersion)
+    if(checked)
+      {
+        cfg.remoteVersion = my_version;
+      }
+    v_diff = uint16_t(cfg.remoteVersion * 100) - uint16_t(cfg.currentVersion * 100);
+    logger("OTA", "v_diff " + String(v_diff));
+    if(v_diff > 0)
       {
         logger("OTA", "Preparing update...");
-        cfg.remoteVersion = my_version;
         neopixel.setWifi(4);
         return true;
       }
@@ -224,6 +254,7 @@ String WIFI::cfgJSON() {
             this->JSONkey("timezone",     this->JSONval(mytime.getTZ()), true) +
             this->JSONkey("main_color",   this->JSONval(neopixel.getColor().r, neopixel.getColor().g, neopixel.getColor().b), true) +
             this->JSONkey("bg_color",     this->JSONval(neopixel.getBgColor().r, neopixel.getBgColor().g, neopixel.getBgColor().b), true) +
+            this->JSONkey("speed",        this->JSONval(neopixel.getSpeed()), true) +
             this->JSONkey("bright",       this->JSONval(neopixel.getBright()), true) +
             this->JSONkey("board_mode",   this->JSONval(neopixel.mode), true) +
             this->JSONkey("redraw_mode",   this->JSONval(neopixel.rmode), true) +
@@ -237,6 +268,8 @@ String WIFI::cfgJSON() {
             )
   );
 }
+
+
 void WIFI::JSONsyncCli(uint8_t nid, String str){
   for(uint8_t i = 0; i < 255; i++){
     if(nid != i){
@@ -334,6 +367,11 @@ void WIFI::handleWebSocketMessage(void *arg, uint8_t *data, size_t len, uint8_t 
         cfg.setBright(uint8_t(json["bright"]), false);
         this->JSONsyncCli(id, String("bright"), uint16_t(neopixel.getBright()));
       }
+      if(json.containsKey("speed")){
+        neopixel.setSpeed(uint8_t(json["speed"]));
+        cfg.setSpeed(uint8_t(json["speed"]), false);
+        this->JSONsyncCli(id, String("speed"), neopixel.getSpeed());
+      }
       if(json.containsKey("schedule_enable")){
         cfg.setSchedule(bool(json["schedule_enable"]), true);
         neopixel.setBright(cfg.getBright());
@@ -392,7 +430,26 @@ void WIFI::startServer() {
       cfg.setNetwork(String(request->getParam("ssid")->value()), String(request->getParam("pwd")->value()));
     }
   });
+  /* Homebridge */
+  server.on("/api/brightness", HTTP_GET, [this](AsyncWebServerRequest *request){
+    if (request->hasParam("set")) {
+      int perc = String(request->getParam("set")->value()).toInt();
+      uint8_t uint = (254/100) * perc;
+      neopixel.setBright(uint);
+      cfg.setBright(uint, false);
+    }
+    float current = neopixel.getBright();
+    int currPerc = round((current/float(254)) * float(100));
+    request->send(200, str(W_JSON).c_str(), String(currPerc));
+  });
 
+  server.on("/api/lights", HTTP_GET, [this](AsyncWebServerRequest *request){
+    if (request->hasParam("set")) {
+      neopixel.setBright(String(request->getParam("set")->value()) == "0" ? 0 : cfg.getBright());
+    }
+    request->send(200, str(W_JSON).c_str(), neopixel.getBright() > 1 ? "1" : "0");
+  });
+  
   this->socket.onEvent([this](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len){
     switch (type) {
       case WS_EVT_CONNECT:
@@ -465,12 +522,14 @@ void WIFI::update() {
     neopixel.setWifi(MODES::ST);
     conn = true;
     MDNS.begin(HOSTNAME);
-    logger("WiFi", "CONNECTED! IP: " + WiFi.localIP().toString());
+    neopixel.strIP = WiFi.localIP().toString();
+    logger("WiFi", "CONNECTED! IP: " + neopixel.strIP);
     logger("mDNS", "ADDRESS: \"" + String(HOSTNAME) + ".local\"");
+    neopixel.setMode(neopixel.MOD::SHOWIP);
     // force NTP if RTC not found...
-    if(!mytime.hasRTC()){
+    //if(!mytime.hasRTC()){
       mytime.GetNtpTime();
-    }
+    //}
     // update
     if(this->checkUpdate()){
       this->doUpdate(FIRMWARE_URL);
@@ -508,4 +567,10 @@ void WIFI::update() {
     this->lastPxSent = currentTime;
     this->sendPixels();
   }
+
+  if(currentTime - this->lastPingCheck >= 5000){
+    this->lastPingCheck = currentTime;
+    this->ping.begin(this->GoogleDNS, 1, 1000);
+  }
+
 }

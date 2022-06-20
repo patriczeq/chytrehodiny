@@ -123,5 +123,89 @@ const uint8_t bignum_8[] PROGMEM = {23, 24, 25, 33, 37, 44, 48, 56, 57, 58, 66, 
 const uint8_t bignum_9[] PROGMEM = {23, 24, 25, 33, 37, 44, 48, 56, 57, 58, 59, 70, 77, 81, 89, 90, 91};      //  [9, ]
 const uint8_t* pole_bignum[] PROGMEM =  {bignum_0, bignum_1, bignum_2, bignum_3, bignum_4, bignum_5, bignum_6, bignum_7, bignum_8, bignum_9};
 
+/*
+const pxCoor pxNum_0[] PROGMEM = {{1, 2}, {2, 2}, {3, 2}, {0, 3}, {4, 3}, {0, 4}, {4, 4}, {0, 5}, {4, 5}, {0, 6}, {4, 6}, {0, 7}, {4, 7}, {1, 8}, {2, 8}, {3, 8}};
+const pxCoor pxNum_1[] PROGMEM = {{2, 2}, {1, 3}, {2, 3}, {2, 4}, {2, 5}, {2, 6}, {2, 7}, {0, 8}, {1, 8}, {2, 8}, {3, 8}, {4, 8}};
+const pxCoor pxNum_2[] PROGMEM = {{1, 2}, {2, 2}, {3, 2}, {0, 3}, {4, 3}, {0, 4}, {4, 4}, {3, 5}, {2, 6}, {1, 7}, {0, 8}, {1, 8}, {2, 8}, {3, 8}, {4, 8}};
+const pxCoor pxNum_3[] PROGMEM = {{1, 2}, {2, 2}, {3, 2}, {0, 3}, {4, 3}, {4, 4}, {2, 5}, {3, 5}, {4, 6}, {4, 7}, {0, 7}, {1, 8}, {2, 8}, {3, 8}};
+const pxCoor pxNum_4[] PROGMEM = {{3, 2}, {2, 3}, {3, 3}, {1, 4}, {3, 4}, {0, 5}, {3, 5}, {0, 6}, {1, 6}, {2, 6}, {3, 6}, {4, 6}, {3, 7}, {3, 8}};
+const pxCoor pxNum_5[] PROGMEM = {{0, 2}, {1, 2}, {2, 2}, {3, 2}, {4, 2}, {0, 3}, {0, 4}, {1, 4}, {2, 4}, {3, 4}, {4, 5}, {4, 6}, {0, 7}, {4, 7}, {1, 8}, {2, 8}, {3, 8}};
+const pxCoor pxNum_6[] PROGMEM = {{1, 2}, {2, 2}, {3, 2}, {0, 3}, {4, 3}, {0, 4}, {0, 5}, {1, 5}, {2, 5}, {3, 5}, {0, 6}, {4, 6}, {0, 7}, {4, 7}, {1, 8}, {2, 8}, {3, 8}};
+const pxCoor pxNum_7[] PROGMEM = {{0, 2}, {1, 2}, {2, 2}, {3, 2}, {4, 2}, {4, 3}, {3, 4}, {2, 5}, {2, 6}, {2, 7}, {2, 8}};
+const pxCoor pxNum_8[] PROGMEM = {{1, 2}, {2, 2}, {3, 2}, {0, 3}, {4, 3}, {0, 4}, {4, 4}, {1, 5}, {2, 5}, {3, 5}, {0, 6}, {4, 6}, {0, 7}, {4, 7}, {1, 8}, {2, 8}, {3, 8}};
+const pxCoor pxNum_9[] PROGMEM = {{1, 2}, {2, 2}, {3, 2}, {0, 3}, {4, 3}, {0, 4}, {4, 4}, {1, 5}, {2, 5}, {3, 5}, {4, 5}, {4, 6}, {0, 7}, {4, 7}, {1, 8}, {2, 8}, {3, 8}};
+const pxCoor pxLetter_A[] PROGMEM = {};
+const pxCoor pxLetter_B[] PROGMEM = {};
+const pxCoor pxLetter_C[] PROGMEM = {};
+const pxCoor pxLetter_D[] PROGMEM = {};
+const pxCoor pxLetter_E[] PROGMEM = {};
+const pxCoor pxLetter_F[] PROGMEM = {};
+const pxCoor pxLetter_G[] PROGMEM = {};
+const pxCoor pxLetter_H[] PROGMEM = {};
+const pxCoor pxLetter_I[] PROGMEM = {};
+const pxCoor pxLetter_J[] PROGMEM = {};
+const pxCoor pxLetter_K[] PROGMEM = {};
+const pxCoor pxLetter_L[] PROGMEM = {};
+const pxCoor pxLetter_M[] PROGMEM = {};
+const pxCoor pxLetter_N[] PROGMEM = {};
+const pxCoor pxLetter_O[] PROGMEM = {};
+const pxCoor pxLetter_P[] PROGMEM = {};
+const pxCoor pxLetter_Q[] PROGMEM = {};
+const pxCoor pxLetter_R[] PROGMEM = {};
+const pxCoor pxLetter_S[] PROGMEM = {};
+const pxCoor pxLetter_T[] PROGMEM = {};
+const pxCoor pxLetter_U[] PROGMEM = {};
+const pxCoor pxLetter_V[] PROGMEM = {};
+const pxCoor pxLetter_W[] PROGMEM = {};
+const pxCoor pxLetter_X[] PROGMEM = {};
+const pxCoor pxLetter_Y[] PROGMEM = {};
+const pxCoor pxLetter_Z[] PROGMEM = {};
+
+const pxChar pxChar_0 PROGMEM = {16, pxNum_0};
+const pxChar pxChar_1 PROGMEM = {12, pxNum_1};
+const pxChar pxChar_2 PROGMEM = {15, pxNum_2};
+const pxChar pxChar_3 PROGMEM = {14, pxNum_3};
+const pxChar pxChar_4 PROGMEM = {14, pxNum_4};
+const pxChar pxChar_5 PROGMEM = {17, pxNum_5};
+const pxChar pxChar_6 PROGMEM = {17, pxNum_6};
+const pxChar pxChar_7 PROGMEM = {11, pxNum_7};
+const pxChar pxChar_8 PROGMEM = {17, pxNum_8};
+const pxChar pxChar_9 PROGMEM = {17, pxNum_9};
+
+const pxChar pxChar_A PROGMEM = {0, pxLetter_A};
+const pxChar pxChar_B PROGMEM = {0, pxLetter_B};
+const pxChar pxChar_C PROGMEM = {0, pxLetter_C};
+const pxChar pxChar_D PROGMEM = {0, pxLetter_D};
+const pxChar pxChar_E PROGMEM = {0, pxLetter_E};
+const pxChar pxChar_F PROGMEM = {0, pxLetter_F};
+const pxChar pxChar_G PROGMEM = {0, pxLetter_G};
+const pxChar pxChar_H PROGMEM = {0, pxLetter_H};
+const pxChar pxChar_I PROGMEM = {0, pxLetter_I};
+const pxChar pxChar_J PROGMEM = {0, pxLetter_J};
+const pxChar pxChar_K PROGMEM = {0, pxLetter_K};
+const pxChar pxChar_L PROGMEM = {0, pxLetter_L};
+const pxChar pxChar_M PROGMEM = {0, pxLetter_M};
+const pxChar pxChar_N PROGMEM = {0, pxLetter_N};
+const pxChar pxChar_O PROGMEM = {0, pxLetter_O};
+const pxChar pxChar_P PROGMEM = {0, pxLetter_P};
+const pxChar pxChar_Q PROGMEM = {0, pxLetter_Q};
+const pxChar pxChar_R PROGMEM = {0, pxLetter_R};
+const pxChar pxChar_S PROGMEM = {0, pxLetter_S};
+const pxChar pxChar_T PROGMEM = {0, pxLetter_T};
+const pxChar pxChar_U PROGMEM = {0, pxLetter_U};
+const pxChar pxChar_V PROGMEM = {0, pxLetter_V};
+const pxChar pxChar_W PROGMEM = {0, pxLetter_W};
+const pxChar pxChar_X PROGMEM = {0, pxLetter_X};
+const pxChar pxChar_Y PROGMEM = {0, pxLetter_Y};
+const pxChar pxChar_Z PROGMEM = {0, pxLetter_Z};
+
+
+const pxChar pxChars[] PROGMEM = {
+  pxChar_0, pxChar_1, pxChar_2, pxChar_3, pxChar_4, pxChar_5, pxChar_6, pxChar_7, pxChar_8, pxChar_9, 
+  pxChar_A, pxChar_B, pxChar_C, pxChar_D, pxChar_E, pxChar_F, pxChar_G, pxChar_H, pxChar_I, pxChar_J,
+  pxChar_K, pxChar_L, pxChar_M, pxChar_N, pxChar_O, pxChar_P, pxChar_Q, pxChar_R, pxChar_S, pxChar_T,
+  pxChar_U, pxChar_V, pxChar_W, pxChar_X, pxChar_Y, pxChar_Z
+};
+*/
 
 #endif

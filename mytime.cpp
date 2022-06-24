@@ -1,4 +1,5 @@
 #include "mytime.h"
+#include "kalendar.h"
 MYTIME::MYTIME() {}
 
 MYTIME::~MYTIME() {}
@@ -25,6 +26,7 @@ void MYTIME::setup(){
   }
   this->tz = cfg.getTimeZone();
   this->timeClient.setTimeOffset(this->tz * 3600);
+  logger("SVATEK", this->getSvatek());
 }
 void MYTIME::update(){
   if(!this->rtcReady && (currentTime - this->updateAt >= 10))
@@ -293,9 +295,32 @@ dateformat MYTIME::getDate(){
 datetimeformat MYTIME::getDateTime(){
   return this->DSTdateTime();
 }
-
+String MYTIME::getSvatek(){
+  switch(this->getDate().m)
+    {
+      case 1:  return str(svatky_1 [this->getDate().d - 1]); break;
+      case 2:  return str(svatky_2 [this->getDate().d - 1]); break;
+      case 3:  return str(svatky_3 [this->getDate().d - 1]); break;
+      case 4:  return str(svatky_4 [this->getDate().d - 1]); break;
+      case 5:  return str(svatky_5 [this->getDate().d - 1]); break;
+      case 6:  return str(svatky_6 [this->getDate().d - 1]); break;
+      case 7:  return str(svatky_7 [this->getDate().d - 1]); break;
+      case 8:  return str(svatky_8 [this->getDate().d - 1]); break;
+      case 9:  return str(svatky_9 [this->getDate().d - 1]); break;
+      case 10: return str(svatky_10[this->getDate().d - 1]); break;
+      case 11: return str(svatky_11[this->getDate().d - 1]); break;
+      case 12: return str(svatky_12[this->getDate().d - 1]); break;
+    }
+  return String("");
+}
 String MYTIME::getTimeStr(){
   return this->strNum(this->getTime().h) + ":" + this->strNum(this->getTime().m) + ":" + this->strNum(this->getTime().s);
+}
+String MYTIME::getTimeHMStr(){
+  return this->strNum(this->getTime().h) + ":" + this->strNum(this->getTime().m);
+}
+String MYTIME::getTimeHMStrDSP(){
+  return this->strNum(this->getTime().h) + ":" + this->strNum(this->getTime().m) + " " + this->strNum(this->getTime().h);
 }
 String MYTIME::getDateStr(){
   return String(this->getDate().y) + "-" + this->strNum(this->getDate().m) + "-" + this->strNum(this->getDate().d);
@@ -303,16 +328,15 @@ String MYTIME::getDateStr(){
 String MYTIME::getDateTimeStr(){
   return this->getDateStr() + " " + this->getTimeStr();
 }
-
-
-
-uint8_t MYTIME::getDow(bool startmonday){
-  return this->getDow(this->d, startmonday);
-}
-
 uint8_t MYTIME::getDow(dateformat dd, bool startmonday){
   static uint8_t t[] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
   dd.y -= dd.m < 3;
   uint8_t _day = ((dd.y + dd.y / 4 - dd.y / 100 + dd.y / 400 + t[dd.m - 1] + dd.d) % 7);
   return !startmonday ? _day : ( _day > 1 ? _day - 1 : 6);
+}
+uint8_t MYTIME::getDow(bool startmonday){
+  return this->getDow(this->d, startmonday);
+}
+String MYTIME::getDowStr(bool short_){
+  return short_ ? str(dow_short[this->getDow()]) : str(dow_long[this->getDow()]);
 }

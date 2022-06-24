@@ -74,7 +74,9 @@ bool CFG::load(){
 }
 
 /* getters */
-
+String CFG::msg(){
+  return String(this->data.msg);
+}
 bool CFG::setupCmplt(){
   return this->data.setupComplete;
 }
@@ -107,13 +109,19 @@ schedule CFG::getSchedule(){
 }
 
 /* setters */
-
+void CFG::setMsg(String msg, bool autosave){
+  msg.toCharArray(this->data.msg, msg.length() + 1);
+  if(autosave){
+    this->save();
+  }
+}
 void CFG::setMainColor(rgb color, bool autosave){
   this->data.mainColor  = color;
   if(autosave){
     this->save();
   }
 }
+
 
 void CFG::setSchedule(schedule sch, bool autosave){
   this->data.brightSchedule = sch;

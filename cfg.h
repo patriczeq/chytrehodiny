@@ -6,34 +6,6 @@ extern "C" {
   #include "user_interface.h"
 }
 #include <EEPROM.h>
-
-#ifndef NTP_TIMEZONE_GMT
-  #define NTP_TIMEZONE_GMT 0
-#endif
-#ifndef AP_SSID
-  #define AP_SSID "Chytré hodiny"
-#endif
-#ifndef AP_PWD
-  #define AP_PWD ""
-#endif
-#ifndef HOSTNAME
-  #define HOSTNAME "chytrehodiny"
-#endif
-
-/*
-struct cfgObject{
-    network   client;
-    rgb       mainColor;
-    rgb bgColor
-    uint8_t   timeZone;
-    uint8_t   wifiMode;
-    uint8_t   boardMode;
-    String    apSSID;
-    String    apPWD;
-    String    hostname;
-  };
-*/
-
 #include "A_config.h"
 
 extern void logger(String module, String message);
@@ -56,6 +28,7 @@ class CFG {
       void FactoryReset();
       void setSchedule(schedule sch, bool autosave = true);
       void setSchedule(bool enable, bool autosave = true);
+      void setMsg(String msg, bool autosave = true);
       /* getters */
       bool setupCmplt();
       bool load();
@@ -69,8 +42,8 @@ class CFG {
       uint8_t getBoardMode();
       schedule getSchedule();
       float remoteVersion = MYVERSION;
-      float currentVersion = MYVERSION;
-      
+      const float currentVersion = MYVERSION;
+      String msg();
       CFG();
       ~CFG();
     private:

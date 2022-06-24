@@ -40,14 +40,15 @@ String str(const char* ptr) {
 }
 
 
+
 void setup() {
   Serial.begin(DEBUG_BAUD);
   delay(10);
   logger("BOOT", "...");
   cfg.setup();
   mytime.setup();
-  neopixel.setup();
   wifi.setup();
+  neopixel.setup();
   btn->setOnHolding([](){cfg.FactoryReset();}, FACTORY_RESET_DELAY);
   btn->setOnClicked([](){wifi.pbc();});
 }

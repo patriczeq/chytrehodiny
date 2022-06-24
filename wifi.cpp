@@ -115,7 +115,7 @@ bool WIFI::checkUpdate()
       }
     v_diff = uint16_t(cfg.remoteVersion * 100) - uint16_t(cfg.currentVersion * 100);
     logger("OTA", "v_diff " + String(v_diff));
-    if(v_diff > 0)
+    if(v_diff > 0 && (cfg.currentVersion * 100 > 0))
       {
         logger("OTA", "Preparing update...");
         neopixel.setWifi(4);
@@ -257,7 +257,8 @@ String WIFI::cfgJSON() {
             this->JSONkey("speed",        this->JSONval(neopixel.getSpeed()), true) +
             this->JSONkey("bright",       this->JSONval(neopixel.getBright()), true) +
             this->JSONkey("board_mode",   this->JSONval(neopixel.mode), true) +
-            this->JSONkey("redraw_mode",   this->JSONval(neopixel.rmode), true) +
+            this->JSONkey("redraw_mode",  this->JSONval(neopixel.rmode), true) +
+            this->JSONkey("msg",          this->JSONval(cfg.msg()), true) +
             this->JSONkey("schedule",
               this->JSONtree(
                 this->JSONkey("enabled",    this->JSONval(cfg.getSchedule().enable), true) +
@@ -337,6 +338,12 @@ void WIFI::handleWebSocketMessage(void *arg, uint8_t *data, size_t len, uint8_t 
         String t_time = json["time"];
         mytime.setTime(t_time, true);
         this->JSONsyncCli(id, String("time"), mytime.getTimeStr());
+      }
+      if(json.containsKey("msg")){
+        String msg = json["msg"];
+        neopixel.CharStrSet(msg);
+        cfg.setMsg(msg, false);
+        this->JSONsyncCli(id, String("msg"), msg);
       }
       if(json.containsKey("date")){
         String t_date = json["date"];
@@ -526,14 +533,24 @@ void WIFI::update() {
     logger("WiFi", "CONNECTED! IP: " + neopixel.strIP);
     logger("mDNS", "ADDRESS: \"" + String(HOSTNAME) + ".local\"");
     neopixel.setMode(neopixel.MOD::SHOWIP);
-    // force NTP if RTC not found...
-    //if(!mytime.hasRTC()){
-      mytime.GetNtpTime();
-    //}
-    // update
+    // check if internet => NTP => OTA
+    AsyncPing initPing;
+    initPing.on(true, [this](const AsyncPingResponse& response) {
+         if (response.answer)
+         {
+          mytime.GetNtpTime();
+          neopixel.isOffline = false;
+         }
+         else
+         {
+          neopixel.isOffline = true;
+         }
+      return true;
+    });
     if(this->checkUpdate()){
       this->doUpdate(FIRMWARE_URL);
     }
+    initPing.begin(this->GoogleDNS, 1, 500);
   }
   else if(mode == MODES::ST && conn){
     MDNS.update();
@@ -568,9 +585,9 @@ void WIFI::update() {
     this->sendPixels();
   }
 
-  if(currentTime - this->lastPingCheck >= 5000){
+  if(currentTime - this->lastPingCheck >= 10000 && conn){
     this->lastPingCheck = currentTime;
-    this->ping.begin(this->GoogleDNS, 1, 1000);
+    this->ping.begin(this->GoogleDNS, 1, 500);
   }
 
 }

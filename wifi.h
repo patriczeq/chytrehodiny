@@ -111,6 +111,6 @@ class WIFI {
       uint32_t ledTime = 0;
       uint8_t mode = cfg.getWifiMode();
       AsyncPing ping;
-      IPAddress GoogleDNS = IPAddress(8,8,8,8);
+      const IPAddress GoogleDNS = IPAddress(8,8,8,8);
  };
  #endif

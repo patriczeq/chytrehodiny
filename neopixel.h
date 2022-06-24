@@ -28,9 +28,19 @@ class NeoPixel {
       void toggle();
       void intro();
       bool isOffline = true;
+      // font
+      String CharMSG = "";
+      uint16_t CharShift = 0;
+      uint16_t CharSwing = 0;
+      int CharPxLen = 0;
+      void CharAppend(uint8_t b);
+      void CharAppend(char s);
+      void CharDraw();
+      void CharStrSet(String msg);
+      void CharStrSetTime();
+      void ClearLED_MATRIX();
       // draws
       void drawTime(bool ineffect = false, bool disableDraw = false);
-      void drawMinOrSec(bool _sec = false);
       void drawMatrix(bool v2);
       void drawFlame(bool v2);
       void drawSET();
@@ -38,7 +48,8 @@ class NeoPixel {
       void drawHeart();
       void drawIP();
       void drawCustom();
-      // px edit
+      void drawMSG(bool showTime = false);
+      // board edit
       void setColor(uint8_t predef);
       void setColor(uint8_t r, uint8_t g, uint8_t b);
       void setColor(rgb c);
@@ -47,12 +58,14 @@ class NeoPixel {
       void setBgColor(uint8_t r, uint8_t g, uint8_t b);
       void setBgColor(rgb c);
       void setBgColor(String hex);
+      // px edit
+      void setPxColor(uint8_t px, rgb c);
       void setPxColor(uint8_t px, uint8_t predef);
       void setPxColor(uint8_t px, uint8_t r, uint8_t g, uint8_t b);
-      void setPxColor(uint8_t px, rgb c);
       void setPxColor(uint8_t px, String hex);
       void setPxColor(pxcoor coor, rgb c);
       void setPxColor(pxcoor coor, uint8_t r, uint8_t g, uint8_t b);
+
       void fadePx(uint8_t px, uint8_t dec);
       void setBright(uint8_t b);
       uint8_t getBright();
@@ -62,10 +75,10 @@ class NeoPixel {
       rgb getBgColor();
       rgb getPxColor(uint8_t px);
       rgb hexRgb(String hex);
+      rgb getBasicColor(uint8_t color);
       String RgbHex(rgb color);
       String getPxColorHex(uint8_t px);
       rgb dimm(rgb color, uint8_t d);
-      void offPx(uint8_t px);
       bool isPxActive(uint8_t px);
       bool pxUnder(uint8_t mpx, uint8_t px);
       void setMode(uint8_t m);
@@ -74,17 +87,8 @@ class NeoPixel {
       map_colrow col(uint8_t id);
       map_colrow row(uint8_t id);
       uint8_t getPxID(uint8_t x, uint8_t y);
-      void drawLine(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2);
-      void drawCircle(uint8_t x0, uint8_t y0, uint8_t sz, rgb color);
-      void drawCircle(uint8_t x0, uint8_t y0, uint8_t sz);
-
-      void fillSquare(uint8_t x0, uint8_t y0, uint8_t sz, rgb color);
-      void fillSquare(uint8_t x0, uint8_t y0, uint8_t sz);
-
-      void drawBigNumber(uint8_t x, uint8_t y, uint8_t n, rgb color);
 
       void singleNumberPrint(uint8_t n, rgb color = {255, 255, 255});
-      //void drawChar(String c, uint8_t x = 3, uint8_t y = 2, rgb color = {255, 255, 255});
 
       enum MOD {
         SET = 0,
@@ -97,6 +101,11 @@ class NeoPixel {
         SECONDS = 8,
         MINUTES = 9,
         SHOWIP = 10,
+        MSGBG = 20,
+        MSG = 21,
+        DIGITIME = 22,
+        DOW = 23,
+        SVATEK = 24,
         WIFI_JEDE = 199,
         CUSTOM = 200
       };
@@ -119,6 +128,16 @@ class NeoPixel {
         AZUROVA   = 6,
         BILA      = 7
       };
+      const rgb S_BARVY[8] = {
+        {  0,  0,  0},  //cerna
+        {255,  0,  0},  //cervena
+        {  0,255,  0},  //zelena
+        {  0,  0,255},  //modra
+        {255,167,  0},  //zluta
+        {255,  0,255},  //azurova
+        {255,255,255}   //bila
+      };
+
       void setUpdate(uint32_t u = 1000); 
       uint16_t getUpdateAt();
       void setCustomBg(uint8_t px, rgb color);
@@ -152,6 +171,7 @@ class NeoPixel {
       rgb mainColor = {0, 0, 0};
       rgb board[NUMPIXELS];
       rgb customBG[NUMPIXELS];
+      bool LED_MATRIX[PX_COLS][PX_ROWS];
       void check_bright();
       uint8_t matrix_max_frames = 0;
       bool redraw_done = true;

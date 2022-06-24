@@ -1,6 +1,6 @@
 #ifndef config_h
 #define config_h
-  #define MYVERSION 1.55
+  #define MYVERSION 1.62
   #define PX_COLS 11
   #define PX_ROWS 11
   #define NUMPIXELS PX_COLS * PX_ROWS
@@ -16,6 +16,7 @@
   #define FIRMWARE_URL "http://eders.cz/hodiny/?d" // ?d&v=VERSION 
   //#define LED_MATRIX_ZIGZAG // zapojení do Z
   #define AP_SSID "Hodiny"
+  #define AP_PWD ""
   #define HOSTNAME "hodiny"
   #define NTP_TIMEZONE_GMT 2
   
@@ -79,6 +80,7 @@
     uint8_t   boardMode;
     uint32_t  mynum;
     bool      setupComplete;
+    char      msg[256];
     schedule  brightSchedule;
   };
 

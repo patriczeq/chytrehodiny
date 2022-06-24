@@ -487,9 +487,11 @@ export default class {
         sta_ssid: "",
         time: [0,0,0],
         date: [2000,1,1],
+        my_msg: "",
         timezone: 2,
         main_color: [255,255,255],
         bg_color: [0,0,0],
+        msg: "",
         bright: 0,
         speed: 100,
         board_mode: 0
@@ -666,6 +668,12 @@ export default class {
         if('time' in json){
           this.notify("success", "Čas byl nastaven...", 2000);
         }
+        if('display_apply' in json){
+          this.notify("success", "Nastavení zobrazení uloženo", 2000);
+        }
+        if('reboot' in json && json.reboot == 'OK'){
+          this.notify("success", "Restartuji...", 2000);
+        }
         
         window.hodiny.lastUpdate = Number(new Date());
       };
@@ -740,21 +748,35 @@ export default class {
       parseInt(hex.substring(4,6), 16)
     ];
   }
+  arrToTime(arr){
+    let nArr = [];
+    for(let t of arr){
+      nArr.push(t<10 ? "0" + String(t) : String(t));
+    }
+    return nArr.join(":");
+  }
   cfgHtmlUpdate(){
     this.qs("#status").innerHTML    = this.wifiStatus;
     this.qs("#colorselect").value   = this.rgbHex(this.cfg.main_color);
+    this.qs("#bgcolorselect").value = this.rgbHex(this.cfg.bg_color);
     this.qs("#modeselect").value    = this.cfg.board_mode;
     this.qs("#manualtime").value    = this.strTime;
     this.qs("#manualdate").value    = this.strDate;
     this.qs("#timezone").value      = this.cfg.timezone;
     this.qs("#bright").value        = this.cfg.bright;
-    this.qs("#speed").value        = this.cfg.speed;
+    this.qs("#speed").value         = this.cfg.speed;
+    this.qs("#msgvalue").value      = this.cfg.msg;
     this.qs("#schedule").checked    = this.cfg.schedule.enabled;
-    this.qs("#schedulebrightf").value = this.cfg.schedule.from;
-    this.qs("#schedulebrightt").value = this.cfg.schedule.to;
+    this.qs("#schedulebrightf").value = this.arrToTime(this.cfg.schedule.from);
+    this.qs("#schedulebrightt").value = this.arrToTime(this.cfg.schedule.to);
     this.qs("#schedulebright").value = this.cfg.schedule.bright;
 
-    
+    if(this.cfg.board_mode == 20 || this.cfg.board_mode == 21){
+      this.qs(".custommsg").style.display = "block";
+    }
+    if(this.cfg.board_mode == 200){
+      this.qs(".customimg").style.display = "block";
+    }
     if(this.cfg.wifi_mode !== 2){
       this.qs("#section_display").style.display = "none";
       this.qs("#section_time").style.display = "none";
@@ -885,6 +907,36 @@ export default class {
       }
     return pxx;
   }
+  CharDisplay(r){
+       return r.replace(new RegExp(/[àáâãäå]/g), "a")
+                .replace(new RegExp(/[çč]/g), "c")
+                .replace(new RegExp(/[ď]/g), "d")
+                .replace(new RegExp(/[èéêëě]/g), "e")
+                .replace(new RegExp(/[ìíîï]/g), "i")
+                .replace(new RegExp(/[ñň]/g), "n")
+                .replace(new RegExp(/[òóôõö]/g), "o")
+                .replace(new RegExp(/[œ]/g), "oe")
+                .replace(new RegExp(/[ř]/g), "r")
+                .replace(new RegExp(/[š]/g), "s")
+                .replace(new RegExp(/[ť]/g), "t")
+                .replace(new RegExp(/[ůùúûü]/g), "u")
+                .replace(new RegExp(/[ýÿ]/g), "y")
+                .replace(new RegExp(/[ž]/g), "z")
+                .replace(new RegExp(/[ÀÁÂÃÄÅ]/g), "A")
+                .replace(new RegExp(/[ÇČ]/g), "C")
+                .replace(new RegExp(/[Ď]/g), "D")
+                .replace(new RegExp(/[ÈÉÊËĚ]/g), "E")
+                .replace(new RegExp(/[ÌÍÎÏ]/g), "I")
+                .replace(new RegExp(/[ÑŇ]/g), "N")
+                .replace(new RegExp(/[ÒÓÔÕÖ]/g), "O")
+                .replace(new RegExp(/[Œ]/g), "OE")
+                .replace(new RegExp(/[Ř]/g), "R")
+                .replace(new RegExp(/[Š]/g), "S")
+                .replace(new RegExp(/[Ť]/g), "T")
+                .replace(new RegExp(/[ŮÙÚÛÜ]/g), "U")
+                .replace(new RegExp(/[ÝŸ]/g), "Y")
+                .replace(new RegExp(/[Ž]/g), "Z");
+  }
   listeners(){
     let that = this;
     this.listen(".noarea", "click", e => {
@@ -917,10 +969,12 @@ export default class {
     this.listen("#modeselect", "input", e => {
       that.cfg.board_mode = Number(e.target.value);
       this.qs(".customimg").style.display = that.cfg.board_mode == 200 ? "block" : "none";
+      this.qs(".custommsg").style.display = that.cfg.board_mode == 20 || that.cfg.board_mode == 21 ? "block" : "none";
     });
     this.listen("#modeselect", "change", e => {
       that.cfg.board_mode = Number(e.target.value);
       this.qs(".customimg").style.display = that.cfg.board_mode == 200 ? "block" : "none";
+      this.qs(".custommsg").style.display = that.cfg.board_mode == 20 || that.cfg.board_mode == 21 ? "block" : "none";
       that.wsSett({board_mode: e.target.value});
     });
     this.listen("#bright", "input", e => {
@@ -958,6 +1012,18 @@ export default class {
     });
     this.listen("#saveDisplay", "click", e => {
       that.wsRequest("saveDisplay");
+    });
+    this.listen("#msgvalue", "input", e => {
+      that.qs("#msgvalue").value = that.CharDisplay(that.qs("#msgvalue").value);
+    });
+    this.listen("#msgvalue", "keyup", e => {
+      that.qs("#msgvalue").value = that.CharDisplay(that.qs("#msgvalue").value);
+    });
+
+    this.listen("#sendMSG", "click", e => {
+      that.wsSett({
+          msg: that.CharDisplay(that.qs("#msgvalue").value)
+        });
     });
     // cas z prohlizece
     this.listen("#timebutton", "click", e => {

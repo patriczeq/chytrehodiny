@@ -17,6 +17,7 @@ extern "C" {
 extern uint32_t currentTime;
 extern void logger(String module, String message);
 extern void prnt(String p);
+extern String str(const char* ptr);
 extern void prntln(String p);
 extern CFG cfg;
 
@@ -33,17 +34,21 @@ class MYTIME {
       void setDateTime(String d, bool toRTC = true);
       void setTZ(uint8_t h);
       // gets
+      String getSvatek();
       timeformat getTime();
       timeformat getTime(String t);
       dateformat getDate();
       datetimeformat getDateTime();
       datetimeformat DSTdateTime(bool use = true);
       String getTimeStr();
+      String getTimeHMStr();
+      String getTimeHMStrDSP();
       String getDateStr();
       String getDateTimeStr();
       String strNum(uint16_t num);
       uint8_t getDow(bool startmonday = true);
       uint8_t getDow(dateformat dd, bool startmonday = true);
+      String getDowStr(bool short_ = true);
       bool GetNtpTime(uint8_t ntz);
       bool GetNtpTime();
       uint8_t getTZ();

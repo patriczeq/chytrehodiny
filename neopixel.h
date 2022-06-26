@@ -60,11 +60,11 @@ class NeoPixel {
       void setBgColor(String hex);
       // px edit
       void setPxColor(uint8_t px, rgb c);
-      void setPxColor(uint8_t px, uint8_t predef);
-      void setPxColor(uint8_t px, uint8_t r, uint8_t g, uint8_t b);
+      void setPxColor(uint8_t px, uint8_t c);
+      /*void setPxColor(uint8_t px, uint8_t r, uint8_t g, uint8_t b);*/
       void setPxColor(uint8_t px, String hex);
       void setPxColor(pxcoor coor, rgb c);
-      void setPxColor(pxcoor coor, uint8_t r, uint8_t g, uint8_t b);
+      /*void setPxColor(pxcoor coor, uint8_t r, uint8_t g, uint8_t b);*/
 
       void fadePx(uint8_t px, uint8_t dec);
       void setBright(uint8_t b);
@@ -128,7 +128,7 @@ class NeoPixel {
         AZUROVA   = 6,
         BILA      = 7
       };
-      const rgb S_BARVY[8] = {
+      rgb S_BARVY[8] = {
         {  0,  0,  0},  //cerna
         {255,  0,  0},  //cervena
         {  0,255,  0},  //zelena

@@ -63,7 +63,7 @@
     minut35,  minut40,  minut45,  minut50,  minut55
    };
 // ===== PXLS
-  uint8_t px_SET[] PROGMEM = {74, 75, 76};
+  const uint8_t px_SET[] PROGMEM = {74, 75, 76};
 
 // ===== ALL ASCII 256
 static unsigned char ascii5x7[] = {

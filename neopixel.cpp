@@ -399,7 +399,7 @@ rgb NeoPixel::hexRgb(String hex){
 
 /* color functions */
 rgb NeoPixel::getBasicColor(uint8_t color){
-   return S_BARVY[color < sizeof(S_BARVY) ? color : 0];
+   return this->S_BARVY[color];
 }
 void NeoPixel::setColor(uint8_t r, uint8_t g, uint8_t b){
   this->mainColor.r = r;
@@ -441,11 +441,11 @@ void NeoPixel::setPxColor(uint8_t px, rgb c){
     this->board[px] = c;
   }
 }
-void NeoPixel::setPxColor(uint8_t px, uint8_t r, uint8_t g, uint8_t b){
+/*void NeoPixel::setPxColor(uint8_t px, uint8_t r, uint8_t g, uint8_t b){
   this->setPxColor(px, {r,g,b});
-}
-void NeoPixel::setPxColor(uint8_t px, uint8_t predef){
-  this->setPxColor(px, this->getBasicColor(predef));
+}*/
+void NeoPixel::setPxColor(uint8_t px, uint8_t c){
+  this->setPxColor(px, rgb{this->S_BARVY[c].r, this->S_BARVY[c].g, this->S_BARVY[c].b});
 }
 void NeoPixel::setPxColor(uint8_t px, String hex){
   this->setPxColor(px, this->hexRgb(hex));
@@ -453,9 +453,9 @@ void NeoPixel::setPxColor(uint8_t px, String hex){
 void NeoPixel::setPxColor(pxcoor coor, rgb c){
   this->setPxColor(this->getPxID(coor.x, coor.y), c);
 }
-void NeoPixel::setPxColor(pxcoor coor, uint8_t r, uint8_t g, uint8_t b){
+/*void NeoPixel::setPxColor(pxcoor coor, uint8_t r, uint8_t g, uint8_t b){
   this->setPxColor(this->getPxID(coor.x, coor.y), r, g, b);
-}
+}*/
 
 
 
@@ -636,7 +636,8 @@ void NeoPixel::drawSET(){
   this->ClearLED_MATRIX();
   for(uint8_t p=0; p<3;p++)
     {
-      this->setPxColor(px_SET[p], BARVY::BILA);
+      //this->setPxColor(px_SET[p], BARVY::BILA); jaaaaj 1.62 chyba po továrku!!
+      this->setPxColor(pgm_read_byte(&(px_SET[p])), rgb{255,255,255});
     }
 }
 

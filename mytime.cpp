@@ -75,7 +75,7 @@ bool MYTIME::rtcGetDateTime(){
   return done;
 }
 bool MYTIME::rtcSetDateTime(datetimeformat dt){
-  return this->RTC.setDateTime(this->t.h, this->t.m, this->t.s, this->d.d, this->d.m, this->d.y, this->getDow(d, true));
+  return this->RTC.setDateTime(this->t.h, this->t.m, this->t.s, this->d.d, this->d.m, this->d.y, this->getDow(d, false));
 }
 
 bool MYTIME::hasRTC(){
@@ -328,15 +328,22 @@ String MYTIME::getDateStr(){
 String MYTIME::getDateTimeStr(){
   return this->getDateStr() + " " + this->getTimeStr();
 }
+
 uint8_t MYTIME::getDow(dateformat dd, bool startmonday){
   static uint8_t t[] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
-  dd.y -= dd.m < 3;
-  uint8_t _day = ((dd.y + dd.y / 4 - dd.y / 100 + dd.y / 400 + t[dd.m - 1] + dd.d) % 7);
-  return !startmonday ? _day : ( _day > 1 ? _day - 1 : 6);
+  static uint8_t mo[] = {6, 0, 1, 2, 3, 4, 5};
+  static uint16_t yr = dd.m < 3 ? dd.y - 1 : dd.y;
+  
+  uint8_t day_ = ((yr + dd.y / 4 - yr / 100 + yr / 400 + t[dd.m - 1] + dd.d) % 7);
+  if(!startmonday){
+    return day_;
+  }else{
+    return mo[day_];
+  }
 }
 uint8_t MYTIME::getDow(bool startmonday){
   return this->getDow(this->d, startmonday);
 }
 String MYTIME::getDowStr(bool short_){
-  return short_ ? str(dow_short[this->getDow()]) : str(dow_long[this->getDow()]);
+  return short_ ? str(dow_short[this->getDow(true)]) : str(dow_long[this->getDow(true)]);
 }

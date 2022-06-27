@@ -46,8 +46,8 @@ class MYTIME {
       String getDateStr();
       String getDateTimeStr();
       String strNum(uint16_t num);
-      uint8_t getDow(bool startmonday = true);
-      uint8_t getDow(dateformat dd, bool startmonday = true);
+      uint8_t getDow(bool startmonday = false);
+      uint8_t getDow(dateformat dd, bool startmonday = false);
       String getDowStr(bool short_ = true);
       bool GetNtpTime(uint8_t ntz);
       bool GetNtpTime();

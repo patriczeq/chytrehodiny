@@ -1,6 +1,6 @@
 #ifndef config_h
 #define config_h
-  #define MYVERSION 1.64
+  #define MYVERSION 1.65
   #define PX_COLS 11
   #define PX_ROWS 11
   #define NUMPIXELS PX_COLS * PX_ROWS

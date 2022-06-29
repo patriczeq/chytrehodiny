@@ -1,5 +1,6 @@
 #include "wifi.h"
 #include "progmem_wifi.h"
+#include "kalendar.h"
 WIFI::WIFI() {}
 
 WIFI::~WIFI() {}
@@ -241,6 +242,14 @@ String WIFI::ARRval(bool v, bool precomma){
   return String(precomma ? "," : "") + String(v ? "true" : "false");
 }
 
+String WIFI::DayInfo(){
+  String  output = mytime.getDowStr(false,true); // Pondělí
+          output+= ", ";
+          output+= String( mytime.getDate().d) + ". ";
+          output+= mytime.getMonStr(false, true, true) + ", ";
+          output+= mytime.getSvatek(true);
+   return output;
+}
       
 String WIFI::cfgJSON() {
   return this->JSONtree(
@@ -259,6 +268,7 @@ String WIFI::cfgJSON() {
             this->JSONkey("board_mode",   this->JSONval(neopixel.mode), true) +
             this->JSONkey("redraw_mode",  this->JSONval(neopixel.rmode), true) +
             this->JSONkey("msg",          this->JSONval(cfg.msg()), true) +
+            this->JSONkey("day_info",     this->JSONval(this->DayInfo()), true) +
             this->JSONkey("schedule",
               this->JSONtree(
                 this->JSONkey("enabled",    this->JSONval(cfg.getSchedule().enable), true) +

@@ -57,6 +57,7 @@ class WIFI {
       void updateLED();
       bool checkUpdate();
       bool fw_update_in_progress = false;
+      String DayInfo();
       WIFI();
       ~WIFI();
     private:

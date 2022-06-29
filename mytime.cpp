@@ -295,24 +295,30 @@ dateformat MYTIME::getDate(){
 datetimeformat MYTIME::getDateTime(){
   return this->DSTdateTime();
 }
-String MYTIME::getSvatek(){
+String MYTIME::getSvatek(bool accent){
   switch(this->getDate().m)
     {
-      case 1:  return str(svatky_1 [this->getDate().d - 1]); break;
-      case 2:  return str(svatky_2 [this->getDate().d - 1]); break;
-      case 3:  return str(svatky_3 [this->getDate().d - 1]); break;
-      case 4:  return str(svatky_4 [this->getDate().d - 1]); break;
-      case 5:  return str(svatky_5 [this->getDate().d - 1]); break;
-      case 6:  return str(svatky_6 [this->getDate().d - 1]); break;
-      case 7:  return str(svatky_7 [this->getDate().d - 1]); break;
-      case 8:  return str(svatky_8 [this->getDate().d - 1]); break;
-      case 9:  return str(svatky_9 [this->getDate().d - 1]); break;
-      case 10: return str(svatky_10[this->getDate().d - 1]); break;
-      case 11: return str(svatky_11[this->getDate().d - 1]); break;
-      case 12: return str(svatky_12[this->getDate().d - 1]); break;
+      case 1:  return accent ? str(svatky_acc_1 [this->getDate().d - 1]) : str(svatky_1 [this->getDate().d - 1]); break;
+      case 2:  return accent ? str(svatky_acc_2 [this->getDate().d - 1]) : str(svatky_2 [this->getDate().d - 1]); break;
+      case 3:  return accent ? str(svatky_acc_3 [this->getDate().d - 1]) : str(svatky_3 [this->getDate().d - 1]); break;
+      case 4:  return accent ? str(svatky_acc_4 [this->getDate().d - 1]) : str(svatky_4 [this->getDate().d - 1]); break;
+      case 5:  return accent ? str(svatky_acc_5 [this->getDate().d - 1]) : str(svatky_5 [this->getDate().d - 1]); break;
+      case 6:  return accent ? str(svatky_acc_6 [this->getDate().d - 1]) : str(svatky_6 [this->getDate().d - 1]); break;
+      case 7:  return accent ? str(svatky_acc_7 [this->getDate().d - 1]) : str(svatky_7 [this->getDate().d - 1]); break;
+      case 8:  return accent ? str(svatky_acc_8 [this->getDate().d - 1]) : str(svatky_8 [this->getDate().d - 1]); break;
+      case 9:  return accent ? str(svatky_acc_9 [this->getDate().d - 1]) : str(svatky_9 [this->getDate().d - 1]); break;
+      case 10: return accent ? str(svatky_acc_10 [this->getDate().d - 1]) : str(svatky_10[this->getDate().d - 1]); break;
+      case 11: return accent ? str(svatky_acc_11 [this->getDate().d - 1]) : str(svatky_11[this->getDate().d - 1]); break;
+      case 12: return accent ? str(svatky_acc_12 [this->getDate().d - 1]) : str(svatky_12[this->getDate().d - 1]); break;
     }
   return String("");
 }
+
+String MYTIME::getMonStr(bool short_, bool accent, bool sklon){
+  return str(mon_acc_2pad[this->getDate().m - 1]);
+}
+
+
 String MYTIME::getTimeStr(){
   return this->strNum(this->getTime().h) + ":" + this->strNum(this->getTime().m) + ":" + this->strNum(this->getTime().s);
 }
@@ -344,6 +350,9 @@ uint8_t MYTIME::getDow(dateformat dd, bool startmonday){
 uint8_t MYTIME::getDow(bool startmonday){
   return this->getDow(this->d, startmonday);
 }
-String MYTIME::getDowStr(bool short_){
-  return short_ ? str(dow_short[this->getDow(true)]) : str(dow_long[this->getDow(true)]);
+String MYTIME::getDowStr(bool short_, bool accent){
+  if(!accent){
+    return short_ ? str(dow_short[this->getDow(true)]) : str(dow_long[this->getDow(true)]);
+  }
+  return short_ ? str(dow_acc_short[this->getDow(true)]) : str(dow_acc_long[this->getDow(true)]);
 }

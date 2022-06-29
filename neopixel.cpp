@@ -26,6 +26,7 @@ void NeoPixel::CharStrSetTime(){
   this->CharMSG = mytime.getTimeHMStrDSP();
 }
 
+
 void NeoPixel::CharStrSet(String msg)
   { 
       this->CharMSG = msg;
@@ -44,6 +45,7 @@ void NeoPixel::CharStrSet(String msg)
         this->CharPxLen -= 1;
       }
   }
+  
 void NeoPixel::CharDraw()
   {
       uint8_t len = this->CharMSG.length() + 1;

@@ -34,7 +34,7 @@ class MYTIME {
       void setDateTime(String d, bool toRTC = true);
       void setTZ(uint8_t h);
       // gets
-      String getSvatek();
+      String getSvatek(bool accent = false);
       timeformat getTime();
       timeformat getTime(String t);
       dateformat getDate();
@@ -48,7 +48,8 @@ class MYTIME {
       String strNum(uint16_t num);
       uint8_t getDow(bool startmonday = false);
       uint8_t getDow(dateformat dd, bool startmonday = false);
-      String getDowStr(bool short_ = true);
+      String getDowStr(bool short_ = true, bool accent = false);
+      String getMonStr(bool short_ = false, bool accent = false, bool sklon = false);
       bool GetNtpTime(uint8_t ntz);
       bool GetNtpTime();
       uint8_t getTZ();

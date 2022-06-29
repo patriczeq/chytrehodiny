@@ -64,7 +64,6 @@
    };
 // ===== PXLS
   const uint8_t px_SET[] PROGMEM = {74, 75, 76};
-
 // ===== ALL ASCII 256
 static unsigned char ascii5x7[] = {
     0x00, 0x00, 0x00, 0x00, 0x00,  // 0x00 (nul)

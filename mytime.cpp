@@ -475,7 +475,7 @@ uint8_t MYTIME::getDow(dateformat dd, bool startmonday){
   }
 }
 uint8_t MYTIME::getDow(bool startmonday){
-  return this->getDow(this->d, startmonday);
+  return this->getDow(this->getDate(), startmonday);
 }
 String MYTIME::getDowStr(bool short_, bool accent){
   if(!accent){

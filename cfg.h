@@ -29,6 +29,8 @@ class CFG {
       void setSchedule(schedule sch, bool autosave = true);
       void setSchedule(bool enable, bool autosave = true);
       void setMsg(String msg, bool autosave = true);
+      void setDST(bool use, bool autosave = true);
+      void setCustomBG(rgb pixels[NUMPIXELS], bool autosave = true);
       /* getters */
       bool setupCmplt();
       bool load();
@@ -44,6 +46,8 @@ class CFG {
       float remoteVersion = MYVERSION;
       const float currentVersion = MYVERSION;
       String msg();
+      void getCustomBG(rgb * ar);
+      bool getDST();
       CFG();
       ~CFG();
     private:

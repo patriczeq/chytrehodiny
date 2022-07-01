@@ -59,16 +59,18 @@ const char file_index_html[] PROGMEM = R"=====(
                 <option value="1">Žádný</option>
                 <option value="9">Minuty na pozadí</option>
                 <option value="8">Sekundy na pozadí</option>
+                <option value="11">Datum na pozadí (pouze den)</option>
                 <option value="2">Matrix na pozadí</option>
                 <option value="3">Matrix</option>
-                <option value="4" disabled>Oheň  (ve vývoji) </option>
-                <option value="5" disabled>Oheň v2  (ve vývoji) </option>
+
                 <option value="7">Srdce</option>
+                
                 <option value="20">Text na pozadi</option>
                 <option value="21">Plovoucí text</option>
                 <option value="22">Digitálky</option>
-                <option value="23">Den v tydnu na pozadí</option>
-                <option value="24">Kdo slaví svátek - na pozadí</option>
+                <option value="23">Den v týdnu na pozadí (Short)</option>
+                <option value="24">Den v týdnu na pozadí (Long)</option>
+                <option value="25">Kdo slaví svátek - na pozadí</option>
                 <option value="200">Vlastní vzor</option>
              </select>
               <div>
@@ -81,11 +83,14 @@ const char file_index_html[] PROGMEM = R"=====(
                 <input type="color" id="pencolor" class="color">
                 <input type="checkbox" id="pencolormixer" class="dropdowncheck" value="2">
                 <label for="pencolormixer" class="dropdownlabel">Namíchat</label>
+                <button id="clearCustom">Vyčistit</button>
               </div>
               <div class="boardClick">
                 <div class="img">
                   <canvas id="drawboard" width="256px" height="256px">
                 </div>
+
+                
               </div>
              </div>
               <div>
@@ -136,30 +141,19 @@ const char file_index_html[] PROGMEM = R"=====(
               </div>
           </div>
        </div>
-       <div class="sett-card" id="section_time">
-          <svg class="icon" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 1000 1000" enable-background="new 0 0 1000 1000" xml:space="preserve">
-            <g><path d="M783,511.4H498V227.9c0-19.4-13.2-35.2-32.6-35.2c-19.4,0-32.6,15.7-32.6,35.2v315.6c0,16.7,9.1,28.2,24.8,31.7c3.1,0.9,6.4,1.4,9.8,1.4H783c19.4,0,35.2-13.2,35.2-32.6C818.2,524.5,802.4,511.4,783,511.4L783,511.4L783,511.4z M500,10c270.6,0,490,219.4,490,490c0,270.6-219.4,490-490,490C229.4,990,10,770.6,10,500C10,229.4,229.4,10,500,10 M500,64.9c-58.8,0-115.7,11.5-169.4,34.2c-51.8,21.9-98.3,53.3-138.3,93.3c-40,40-71.4,86.5-93.3,138.3C76.4,384.3,64.9,441.2,64.9,500c0,58.8,11.5,115.7,34.2,169.3c21.9,51.8,53.3,98.3,93.3,138.3c40,40,86.5,71.4,138.3,93.3c53.6,22.7,110.6,34.2,169.3,34.2c58.8,0,115.7-11.5,169.3-34.2c51.8-21.9,98.3-53.3,138.3-93.3c40-40,71.4-86.5,93.3-138.3c22.7-53.6,34.2-110.6,34.2-169.3c0-58.8-11.5-115.8-34.2-169.3c-21.9-51.8-53.3-98.3-93.3-138.3c-40-40-86.5-71.4-138.3-93.3C615.7,76.4,558.8,64.9,500,64.9L500,64.9L500,64.9z"/></g>
-          </svg>
-          <h4>Ruční nastavení času</h4>
-          <div class="sett-card-content">
-             <input type="time" id="manualtime">
-             <input type="date" id="manualdate">
-          </div>
-          <div class="sett-card-actions">
-            <button id="applyTime" class="save">Použít</button>
-            <button id="timebutton">Získat z tohoto zařízení</button>
-          </div>
-       </div>
+       
        <div class="sett-card" id="section_ntp">
           <svg class="icon" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 1000 1000" enable-background="new 0 0 1000 1000" xml:space="preserve">
             <g><path d="M783,511.4H498V227.9c0-19.4-13.2-35.2-32.6-35.2c-19.4,0-32.6,15.7-32.6,35.2v315.6c0,16.7,9.1,28.2,24.8,31.7c3.1,0.9,6.4,1.4,9.8,1.4H783c19.4,0,35.2-13.2,35.2-32.6C818.2,524.5,802.4,511.4,783,511.4L783,511.4L783,511.4z M500,10c270.6,0,490,219.4,490,490c0,270.6-219.4,490-490,490C229.4,990,10,770.6,10,500C10,229.4,229.4,10,500,10 M500,64.9c-58.8,0-115.7,11.5-169.4,34.2c-51.8,21.9-98.3,53.3-138.3,93.3c-40,40-71.4,86.5-93.3,138.3C76.4,384.3,64.9,441.2,64.9,500c0,58.8,11.5,115.7,34.2,169.3c21.9,51.8,53.3,98.3,93.3,138.3c40,40,86.5,71.4,138.3,93.3c53.6,22.7,110.6,34.2,169.3,34.2c58.8,0,115.7-11.5,169.3-34.2c51.8-21.9,98.3-53.3,138.3-93.3c40-40,71.4-86.5,93.3-138.3c22.7-53.6,34.2-110.6,34.2-169.3c0-58.8-11.5-115.8-34.2-169.3c-21.9-51.8-53.3-98.3-93.3-138.3c-40-40-86.5-71.4-138.3-93.3C615.7,76.4,558.8,64.9,500,64.9L500,64.9L500,64.9z"/></g>
           </svg>
-          <h4>Internetový čas</h4>
+          <h4>Nastavení času</h4>
           <div class="sett-card-content">
-             <button id="ntpbutton">Synchronizovat</button>
+              <button id="timebutton">Získat z tohoto zařízení</button>
+              <br>
+             <button id="ntpbutton">Synchronizovat NTP</button>
              <select id="timezone">
                 <option value="0">0 GMT</option>
-                <option value="1">+1 GMT</option>
+                <option value="1">+1 GMT (Praha)</option>
                 <option value="2">+2 GMT</option>
                 <option value="3">+3 GMT</option>
                 <option value="4">+4 GMT</option>
@@ -171,9 +165,28 @@ const char file_index_html[] PROGMEM = R"=====(
                 <option value="10">+10 GMT</option>
                 <option value="11">+11 GMT</option>
              </select>
+             <br>
+             <label for="useDST">Automatický letní čas</label>
+             <input type="checkbox" id="useDST" class="hidden toggle">
+             <label for="useDST"></label>
              
           </div>
        </div>
+
+       <div class="sett-card" id="section_time">
+          <svg class="icon" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 1000 1000" enable-background="new 0 0 1000 1000" xml:space="preserve">
+            <g><path d="M783,511.4H498V227.9c0-19.4-13.2-35.2-32.6-35.2c-19.4,0-32.6,15.7-32.6,35.2v315.6c0,16.7,9.1,28.2,24.8,31.7c3.1,0.9,6.4,1.4,9.8,1.4H783c19.4,0,35.2-13.2,35.2-32.6C818.2,524.5,802.4,511.4,783,511.4L783,511.4L783,511.4z M500,10c270.6,0,490,219.4,490,490c0,270.6-219.4,490-490,490C229.4,990,10,770.6,10,500C10,229.4,229.4,10,500,10 M500,64.9c-58.8,0-115.7,11.5-169.4,34.2c-51.8,21.9-98.3,53.3-138.3,93.3c-40,40-71.4,86.5-93.3,138.3C76.4,384.3,64.9,441.2,64.9,500c0,58.8,11.5,115.7,34.2,169.3c21.9,51.8,53.3,98.3,93.3,138.3c40,40,86.5,71.4,138.3,93.3c53.6,22.7,110.6,34.2,169.3,34.2c58.8,0,115.7-11.5,169.3-34.2c51.8-21.9,98.3-53.3,138.3-93.3c40-40,71.4-86.5,93.3-138.3c22.7-53.6,34.2-110.6,34.2-169.3c0-58.8-11.5-115.8-34.2-169.3c-21.9-51.8-53.3-98.3-93.3-138.3c-40-40-86.5-71.4-138.3-93.3C615.7,76.4,558.8,64.9,500,64.9L500,64.9L500,64.9z"/></g>
+          </svg>
+          <h4>Ruční nastavení času</h4>
+          <div class="sett-card-content">
+             <input type="time" id="manualtime">
+             <input type="date" id="manualdate">
+          </div>
+          <div class="sett-card-actions">
+            <button id="applyTime" class="save">Použít</button>
+          </div>
+       </div>
+       
        <div class="sett-card" id="section_wifi">
           <svg version="1.1" class="icon" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 494.45 494.45" style="enable-background:new 0 0 494.45 494.45;" xml:space="preserve">
             <g>

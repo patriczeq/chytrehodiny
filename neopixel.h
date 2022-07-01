@@ -40,9 +40,9 @@ class NeoPixel {
       void CharStrSetTime();
       void ClearLED_MATRIX();
       // draws
-      void drawTime(bool ineffect = false, bool disableDraw = false);
+      void drawTime(rgb color);
+      void setTimePxls();
       void drawMatrix(bool v2);
-      void drawFlame(bool v2);
       void drawSET();
       void setBoardMode(uint8_t bm);
       void drawHeart();
@@ -82,11 +82,11 @@ class NeoPixel {
       bool isPxActive(uint8_t px);
       bool pxUnder(uint8_t mpx, uint8_t px);
       void setMode(uint8_t m);
-      void debug();
       void setWifi(uint8_t m);
       map_colrow col(uint8_t id);
       map_colrow row(uint8_t id);
       uint8_t getPxID(uint8_t x, uint8_t y);
+      bool oldBoardBlack();
 
       void singleNumberPrint(uint8_t n, rgb color = {255, 255, 255});
 
@@ -95,17 +95,18 @@ class NeoPixel {
         HODINY = 1,
         MATRIX = 2,
         MATRIX_V2 = 3,
-        OHEN = 4,
-        OHEN_V2 = 5,
+
         SRDCE = 7,
         SECONDS = 8,
         MINUTES = 9,
         SHOWIP = 10,
+        DATE = 11,
         MSGBG = 20,
         MSG = 21,
         DIGITIME = 22,
         DOW = 23,
-        SVATEK = 24,
+        DOWL = 24,
+        SVATEK = 25,
         WIFI_JEDE = 199,
         CUSTOM = 200
       };
@@ -117,7 +118,7 @@ class NeoPixel {
         MATRIX_R = 4
       };
       uint8_t mode = MOD::SET;
-      uint8_t rmode = RMOD::NONE;
+      uint8_t rmode = RMOD::FALL;
       enum BARVY {
         CERNA     = 0,
         CERVENA   = 1,
@@ -141,7 +142,9 @@ class NeoPixel {
       void setUpdate(uint32_t u = 1000); 
       uint16_t getUpdateAt();
       void setCustomBg(uint8_t px, rgb color);
+      void clearCustomBg();
       String strIP = "0.0.0.0";
+      rgb customBG[NUMPIXELS];
       NeoPixel();
       ~NeoPixel();
     private:
@@ -154,6 +157,8 @@ class NeoPixel {
       };
       bool timePxls[NUMPIXELS];
       bool timePxlsNew[NUMPIXELS];
+      uint8_t tHour   = 0;
+      uint8_t tMinute = 0;
       void runRedrawEffect();
       uint8_t timePxLastRow(uint8_t col);
       uint8_t wifi_mode = 0;
@@ -170,14 +175,11 @@ class NeoPixel {
       rgb backColor = {0, 0, 0};
       rgb mainColor = {0, 0, 0};
       rgb board[NUMPIXELS];
-      rgb customBG[NUMPIXELS];
+   
       bool LED_MATRIX[PX_COLS][PX_ROWS];
       void check_bright();
       uint8_t matrix_max_frames = 0;
-      bool redraw_done = true;
-      uint8_t redraw_frame = 0;
-      uint8_t redraw_speed = 100;
-      uint32_t redraw_loop = 0;
+      bool redraw_done = false;
       uint8_t matrix_rain_len[PX_COLS];
       int matrix_rain_pos[PX_COLS];
  };

@@ -1,6 +1,7 @@
 #ifndef config_h
 #define config_h
-  #define MYVERSION 1.65
+
+  #define MYVERSION 1.66
   #define PX_COLS 11
   #define PX_ROWS 11
   #define NUMPIXELS PX_COLS * PX_ROWS
@@ -19,47 +20,50 @@
   #define AP_PWD ""
   #define HOSTNAME "hodiny"
   #define NTP_TIMEZONE_GMT 2
+  #define ST_SSID_MAXLEN 32
+  #define ST_PASS_MAXLEN 64
+  #define MSG_MAXLEN 256
   
   #define ST_SSID ""
   #define ST_PASS "" 
   struct map_colrow{
-    uint8_t px[PX_COLS];
+    uint8_t     px[PX_ROWS];
   };
   struct pxCoor{
-    uint8_t x;
-    uint8_t y;
+    uint8_t     x;
+    uint8_t     y;
   };
   struct pxChar{
-    uint8_t len;
-    const pxCoor* px;
+    uint8_t     len;
+    const       pxCoor* px;
   };
   struct network{
-    char ssid[33];
-    char password[65];
+    char        ssid[ST_SSID_MAXLEN + 1];
+    char        password[ST_PASS_MAXLEN + 1];
   };
   struct rgb{
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
+    uint8_t     r;
+    uint8_t     g;
+    uint8_t     b;
   };
   struct timeformat{
-    uint8_t h;
-    uint8_t m;
-    uint8_t s;
-    uint16_t ms;
+    uint8_t     h;
+    uint8_t     m;
+    uint8_t     s;
+    uint16_t    ms;
   };
   struct dateformat{
-    uint16_t y;
-    uint8_t m;
-    uint8_t d;
+    uint16_t    y;
+    uint8_t     m;
+    uint8_t     d;
   };
   struct datetimeformat{
-    dateformat d;
-    timeformat t;
+    dateformat  d;
+    timeformat  t;
   };
   struct pxcoor{
-    uint8_t x;
-    uint8_t y;
+    uint8_t     x;
+    uint8_t     y;
   };
 
   struct schedule{
@@ -80,7 +84,9 @@
     uint8_t   boardMode;
     uint32_t  mynum;
     bool      setupComplete;
-    char      msg[256];
+    char      msg[MSG_MAXLEN];
+    bool      useDST;
+    rgb       customBG[NUMPIXELS];
     schedule  brightSchedule;
   };
 

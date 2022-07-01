@@ -24,6 +24,7 @@ void MYTIME::setup(){
     this->d = {2000, 01, 01};
     this->t = {0, 0, 0};
   }
+  this->useDST = cfg.getDST();
   this->tz = cfg.getTimeZone();
   this->timeClient.setTimeOffset(this->tz * 3600);
   logger("SVATEK", this->getSvatek());
@@ -84,7 +85,7 @@ bool MYTIME::hasRTC(){
 
 
 bool MYTIME::isBetween(timeformat from, timeformat to){
-  uint32_t _c = this->t.s + (this->t.m * 60) + (this->t.h * 3600);
+  uint32_t _c = this->getTime().s + (this->getTime().m * 60) + (this->getTime().h * 3600);
   uint32_t _f = from.s + (from.m * 60) + (from.h * 3600);
   uint32_t _t = to.s + (to.m * 60) + (to.h * 3600);
 
@@ -98,15 +99,13 @@ void MYTIME::setTZ(uint8_t h){
   this->tz = h;
   this->timeClient.setTimeOffset(this->tz * 3600);
 }
-bool MYTIME::GetNtpTime(){
-  return this->GetNtpTime(!this->isDST() ? (this->tz - 1) : this->tz);
-}
-bool MYTIME::GetNtpTime(uint8_t ntz) {
+
+bool MYTIME::GetNtpTime() {
   logger("NTP", "BEGIN");
     uint8_t i = 0;
-    if(ntz < 200){
-      this->timeClient.setTimeOffset(ntz * 3600);
-    }
+
+    
+    this->timeClient.setTimeOffset(this->tz * 3600);
     while (!timeClient.update() && i < 3) {
       timeClient.forceUpdate();
       i++;
@@ -178,43 +177,156 @@ void MYTIME::addMonth(){
 void MYTIME::addYear(){
   this->d.y++;
 }
-// reaguje jen na den, upravit ještě 2-3 hodinu
+// letni cas vraci true... -1 hod
 bool MYTIME::isDST(){ 
-  if (this->d.m < 3 || this->d.m > 11) { 
-    return false; 
+  if(!this->useDST){
+    return false;
   }
-  if (this->d.m > 3 && this->d.m < 11) { 
-    return true; 
-  }
-  int previousSunday = this->d.d - this->getDow(false);
+  int y = this->d.y - 2000;                 // Get year from RTC and subtract 2000
+  int x1 = (y + y / 4 + 5) % 7;             // remainder will identify which day of month
 
-  return this->d.m == 3 ? previousSunday >= 8 : previousSunday <= 0;
-  
+  if (
+    
+    ((this->d.d == (31 - x1) ) && (this->d.m == 3) && ( this->t.h >= 2))  // je posledni sobota v breznu 2hod +
+    || ((this->d.d > (31 - x1) ) && (this->d.m == 3))                     // je jakykoliv den v breznu po posledni sobote
+    || ( this->d.m > 3 && this->d.m < 10)                                 // kdykoliv mezi breznem a rijnem
+    || ( this->d.m == 10 && this->d.d == (30 - x1) && this->t.h < 2)      // je posledni sobota v rijnu pred 2hod
+    )
+  {
+    return true; // letni cas
+  }
+    return false;
+    
 }
 
-datetimeformat MYTIME::DSTdateTime(bool use){
-  datetimeformat edit = {this->d, this->t};
-  if(!use || !this->isDST()){
-    return edit;
-  }
-  if(edit.t.h > 0){
-    edit.t.h--;
-  }else{
-    edit.t.h = 23;
-    if(edit.d.d > 1){
-      edit.d.d--;
-    }else{
-      if(edit.d.m > 1){
-        edit.d.m--;
-      }else{
-        edit.d.m = 12;
-        edit.d.y--;
+
+/**
+ * EOF DATETIME MODIFIER Up/Down
+ */
+datetimeformat MYTIME::editSec(datetimeformat date, bool plus)
+  {
+    if(plus && date.t.s == 59)
+      {
+        date.t.s = 0;
+        date = this->editMinute(date, plus);
       }
-      uint8_t monDays[13] = {0, 31, !(edit.d.y % 4) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-      edit.d.d = monDays[edit.d.m];
-    }
+    else if(plus)
+      {
+        date.t.s++;
+      }
+    else if(!plus && date.t.s == 0)
+      {
+        date.t.s = 59;
+        date = this->editMinute(date, plus);
+      }
+    else if(!plus)
+      {
+        date.t.s--;
+      }
+    return date;
   }
-  return edit;
+datetimeformat MYTIME::editMinute(datetimeformat date, bool plus)
+  {
+    if(plus && date.t.m == 59)
+      {
+        date.t.m = 0;
+        date = this->editHour(date, plus);
+      }
+    else if(plus)
+      {
+        date.t.m++;
+      }
+    else if(!plus && date.t.m == 0)
+      {
+        date.t.m = 59;
+        date = this->editHour(date, plus);
+      }
+    else if(!plus)
+      {
+        date.t.m--;
+      }
+    return date;
+  }
+datetimeformat MYTIME::editHour(datetimeformat date, bool plus)
+  {
+    if(plus && date.t.h == 23)
+      {
+        date.t.h = 0;
+        date = this->editDay(date, plus);
+      }
+    else if(plus)
+      {
+        date.t.h++;
+      }
+    else if(!plus && date.t.h == 0)
+      {
+        date.t.h = 23;
+        date = this->editDay(date, plus);
+      }
+    else if(!plus)
+      {
+        date.t.h--;
+      }
+    return date;
+  }
+datetimeformat MYTIME::editDay(datetimeformat date, bool plus)
+  {
+    const uint8_t monDays[13] = {0, 31, !(date.d.y % 4) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    if(plus && date.d.d == monDays[date.d.m])
+      {
+        date.d.d = 1;
+        date = this->editMonth(date, plus);
+      }
+    else if(plus)
+      {
+        date.d.d++;
+      }
+    else if(!plus && date.d.d == 1)
+      {
+        date = this->editMonth(date, plus);
+        date.d.d = monDays[date.d.m];
+      }
+     else if(!plus)
+      {
+        date.d.d--;
+      }
+    return date;
+  }
+datetimeformat MYTIME::editMonth(datetimeformat date, bool plus)
+  {
+    if(plus && date.d.m == 12)
+      {
+        date.d.m = 1;
+        date = this->editYear(date, plus);
+      }
+     else if(plus)
+      {
+        date.d.m++;
+      }
+     else if(!plus && date.d.m == 1)
+      {
+        date.d.m = 12;
+        date = this->editYear(date, plus);
+      }
+     else if(!plus)
+      {
+        date.d.m--;
+      }
+     return date;
+  }
+datetimeformat MYTIME::editYear(datetimeformat date, bool plus)
+  {
+    date.d.y += plus ? 1 : -1;
+    return date;
+  }
+
+
+/**
+ * EOF DATETIME MODIFIER
+ */
+
+datetimeformat MYTIME::DSTdateTime(){
+  return this->isDST() ? this->editHour(datetimeformat{this->d, this->t}, true) : datetimeformat{this->d, this->t};
 }
 
 String MYTIME::strNum(uint16_t num){
@@ -257,13 +369,8 @@ void MYTIME::setDate(String d, bool toRTC){
   );
 }
 
-void MYTIME::setDateTime(datetimeformat d, bool toRTC){
-  this->setDate(d.d, toRTC);
-  this->setTime(d.t, toRTC);
-}
-void MYTIME::setDateTime(String d, bool toRTC){
-  this->setDateTime(
-    datetimeformat {
+datetimeformat MYTIME::StrtoDateTime(String d){ // from timestamp
+  return {
       dateformat {
         d.substring(0, 4).toInt(),
         d.substring(5, 7).toInt(),
@@ -274,7 +381,18 @@ void MYTIME::setDateTime(String d, bool toRTC){
         d.substring(14, 16).toInt(),
         d.substring(17, 19).toInt()
       }
-    },
+    };
+}
+
+void MYTIME::setDateTime(datetimeformat d, bool toRTC){
+  this->setDate(d.d, toRTC);
+  this->setTime(d.t, toRTC);
+}
+
+
+void MYTIME::setDateTime(String d, bool toRTC){
+  this->setDateTime(
+    this->StrtoDateTime(d),
     toRTC
   );
 }
@@ -312,6 +430,15 @@ String MYTIME::getSvatek(bool accent){
       case 12: return accent ? str(svatky_acc_12 [this->getDate().d - 1]) : str(svatky_12[this->getDate().d - 1]); break;
     }
   return String("");
+}
+
+
+String MYTIME::DayInfo(){
+  String  output = this->getDowStr(false,true) + " "; // Pondělí
+          output+= String( this->getDate().d ) + ". ";
+          output+= this->getMonStr(false, true, true) + ", ";
+          output+= this->getSvatek(true);
+   return output;
 }
 
 String MYTIME::getMonStr(bool short_, bool accent, bool sklon){

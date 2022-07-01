@@ -241,15 +241,6 @@ String WIFI::ARRval(int v, bool precomma){
 String WIFI::ARRval(bool v, bool precomma){
   return String(precomma ? "," : "") + String(v ? "true" : "false");
 }
-
-String WIFI::DayInfo(){
-  String  output = mytime.getDowStr(false,true); // Pondělí
-          output+= ", ";
-          output+= String( mytime.getDate().d) + ". ";
-          output+= mytime.getMonStr(false, true, true) + ", ";
-          output+= mytime.getSvatek(true);
-   return output;
-}
       
 String WIFI::cfgJSON() {
   return this->JSONtree(
@@ -261,6 +252,7 @@ String WIFI::cfgJSON() {
             this->JSONkey("date",         this->JSONval(mytime.getDate().y, mytime.getDate().m, mytime.getDate().d), true) +
             this->JSONkey("dow",          this->JSONval(mytime.getDow()), true) +
             this->JSONkey("timezone",     this->JSONval(mytime.getTZ()), true) +
+            this->JSONkey("use_dst",      this->JSONval(cfg.getDST()), true) +
             this->JSONkey("main_color",   this->JSONval(neopixel.getColor().r, neopixel.getColor().g, neopixel.getColor().b), true) +
             this->JSONkey("bg_color",     this->JSONval(neopixel.getBgColor().r, neopixel.getBgColor().g, neopixel.getBgColor().b), true) +
             this->JSONkey("speed",        this->JSONval(neopixel.getSpeed()), true) +
@@ -268,7 +260,7 @@ String WIFI::cfgJSON() {
             this->JSONkey("board_mode",   this->JSONval(neopixel.mode), true) +
             this->JSONkey("redraw_mode",  this->JSONval(neopixel.rmode), true) +
             this->JSONkey("msg",          this->JSONval(cfg.msg()), true) +
-            this->JSONkey("day_info",     this->JSONval(this->DayInfo()), true) +
+            this->JSONkey("day_info",     this->JSONval(mytime.DayInfo()), true) +
             this->JSONkey("schedule",
               this->JSONtree(
                 this->JSONkey("enabled",    this->JSONval(cfg.getSchedule().enable), true) +
@@ -311,9 +303,17 @@ void WIFI::handleWebSocketMessage(void *arg, uint8_t *data, size_t len, uint8_t 
         bool ntpsuccess = mytime.GetNtpTime();
         if(ntpsuccess)
           {
-            this->socket.textAll(this->JSONtree(this->JSONkey("time", this->JSONval(mytime.getTime().h, mytime.getTime().m, mytime.getTime().s))));
+            this->socket.textAll(
+              this->JSONtree(
+                this->JSONkey("time", this->JSONval(mytime.getTime().h, mytime.getTime().m, mytime.getTime().s), true) +
+                this->JSONkey("ntp", this->JSONval(mytime.timeClient.getFormattedDate()))
+              )
+            );
           }
-        this->socket.textAll(this->JSONtree(this->JSONkey("ntp_update", this->JSONval(ntpsuccess))));
+        else
+          {
+            this->socket.textAll(this->JSONtree(this->JSONkey("ntp_update", this->JSONval(ntpsuccess))));
+          }
       }
       else if (strcmp((char*)data, "factoryReset") == 0) {
         cfg.FactoryReset();
@@ -326,6 +326,11 @@ void WIFI::handleWebSocketMessage(void *arg, uint8_t *data, size_t len, uint8_t 
       else if (strcmp((char*)data, "saveDisplay") == 0) {
         cfg.save();
         this->socket.textAll(this->JSONtree(this->JSONkey("display_apply", this->JSONval("ok"))));
+      }
+      else if(strcmp((char*)data, "clear_custom") == 0){
+        neopixel.clearCustomBg();
+        cfg.setCustomBG(neopixel.customBG, false);
+        this->socket.textAll(this->JSONtree(this->JSONkey("clear_custom", this->JSONval("ok"))));
       }
       else{
         this->socket.textAll(this->JSONtree(this->JSONkey("error", "\"Unknown command: " + String((char*)data)) + "\""));
@@ -341,28 +346,49 @@ void WIFI::handleWebSocketMessage(void *arg, uint8_t *data, size_t len, uint8_t 
       
       if(json.containsKey("custom_bg") && json.containsKey("cust_r") && json.containsKey("cust_g") && json.containsKey("cust_b")){
         neopixel.setCustomBg(byte(json["custom_bg"]), rgb {byte(json["cust_r"]), byte(json["cust_g"]), byte(json["cust_b"])});
+
+        cfg.setCustomBG(neopixel.customBG, false);
         
         this->JSONsyncCli(id, String("custom_bg"), true);
       }
-      if(json.containsKey("time")){
+      if(json.containsKey("clear_custom")){
+        neopixel.clearCustomBg();
+        cfg.setCustomBG(neopixel.customBG, false);
+        
+        this->JSONsyncCli(id, String("clear_custom"), true);
+      }
+      if(json.containsKey("time") && json.containsKey("date")){
+        String t_date = json["date"];
+        String t_time = json["time"];
+        datetimeformat DT = mytime.StrtoDateTime(t_date + String(" ") + t_time);
+        mytime.setDateTime(mytime.isDST() ? mytime.editHour(DT, false) : DT, true); // Letní čas? odebrat jednu hodinu pro interní čas...
+        this->JSONsyncCli(id, String("date_time"), "set");
+       
+      }else if(json.containsKey("time")){
         String t_time = json["time"];
         mytime.setTime(t_time, true);
-        this->JSONsyncCli(id, String("time"), mytime.getTimeStr());
+        this->JSONsyncCli(id, String("time"), "set");
+      }else if(json.containsKey("date")){
+        String t_date = json["date"];
+        mytime.setDate(t_date, true);
+        this->JSONsyncCli(id, String("date"), "set");
       }
+      
       if(json.containsKey("msg")){
         String msg = json["msg"];
         neopixel.CharStrSet(msg);
         cfg.setMsg(msg, false);
         this->JSONsyncCli(id, String("msg"), msg);
       }
-      if(json.containsKey("date")){
-        String t_date = json["date"];
-        mytime.setDate(t_date, true);
-        this->JSONsyncCli(id, String("date"), mytime.getDateStr());
+      if(json.containsKey("use_dst")){
+        cfg.setDST(bool(json["use_dst"]), true);
+        mytime.useDST = cfg.getDST();
+        this->JSONsyncCli(id, String("use_dst"), cfg.getDST());
       }
+      
       if(json.containsKey("timezone")){
         mytime.setTZ(uint8_t(json["timezone"]));
-        cfg.setTimeZone(uint8_t(json["timezone"]), false);
+        cfg.setTimeZone(uint8_t(json["timezone"]), true);
         this->JSONsyncCli(id, String("timezone"), mytime.getTZ());
       }
       if(json.containsKey("color")){

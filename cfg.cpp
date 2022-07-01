@@ -29,7 +29,12 @@ void CFG::defaults(){
   this->data.wifiMode   = 2;  // 1 AP, 2 ST
   this->data.boardMode  = 0;
   this->data.mynum      = MYNUM;
+  this->data.useDST     = true;
   this->data.setupComplete = false;
+  for(uint8_t p = 0; p < NUMPIXELS; p++)
+    {
+      this->data.customBG[p] = rgb{0,0,0};
+    }
   this->data.brightSchedule.enable   = false;
   this->data.brightSchedule.from  = {0,0,0};
   this->data.brightSchedule.to  = {0,0,0};
@@ -74,6 +79,15 @@ bool CFG::load(){
 }
 
 /* getters */
+void CFG::getCustomBG(rgb * ar){
+  for(uint8_t p = 0; p < NUMPIXELS; p++)
+    {
+      ar[p] = this->data.customBG[p];
+    }
+}
+bool CFG::getDST(){
+  return this->data.useDST;
+}
 String CFG::msg(){
   return String(this->data.msg);
 }
@@ -109,6 +123,21 @@ schedule CFG::getSchedule(){
 }
 
 /* setters */
+void CFG::setCustomBG(rgb pixels[NUMPIXELS], bool autosave){
+  for(uint8_t p = 0; p < NUMPIXELS; p++)
+    {
+      this->data.customBG[p] = pixels[p];
+    }
+  if(autosave){
+    this->save();
+  }
+}
+void CFG::setDST(bool use, bool autosave){
+  this->data.useDST = use;
+  if(autosave){
+    this->save();
+  }
+}
 void CFG::setMsg(String msg, bool autosave){
   msg.toCharArray(this->data.msg, msg.length() + 1);
   if(autosave){

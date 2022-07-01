@@ -2,7 +2,7 @@ const char file_clock_js[] PROGMEM = R"=====(
 /*
  * 
  * Hodiny
- * patrikeder.cz 2021
+ * patrikeder.cz 2022
  * 
  */
 export default class {
@@ -158,23 +158,25 @@ export default class {
           this.notify("danger","Probíhá aktualizace Firmware!", 60000);
         }
         if('ntp_update' in json){
-          if(json.ntp_update)
-            {
-              this.notify("success", "Synchronizace byla úspěšná!", 2000);
-            }
-           else
+          if(!json.ntp_update)
             {
               this.notify("danger", "Chyba aktualizace!", 2000);
             }
         }
-        if('time' in json){
-          this.notify("success", "Čas byl nastaven...", 2000);
+        if('ntp' in json){
+          this.notify("success", `NTP: ${json.ntp}`, 2000);
         }
         if('display_apply' in json){
           this.notify("success", "Nastavení zobrazení uloženo", 2000);
         }
         if('reboot' in json && json.reboot == 'OK'){
           this.notify("success", "Restartuji...", 2000);
+        }
+        if('clear_custom' in json){
+          for(let i = 0; i < 121; i ++){
+            this.custom.push("#000");
+          }
+          this.reDrawCust();
         }
         
         window.hodiny.lastUpdate = Number(new Date());
@@ -258,10 +260,12 @@ export default class {
     this.qs("#bright").value        = this.cfg.bright;
     this.qs("#speed").value         = this.cfg.speed;
     this.qs("#msgvalue").value      = this.cfg.msg;
+    this.qs("#useDST").checked      = this.cfg.use_dst;
     this.qs("#schedule").checked    = this.cfg.schedule.enabled;
     this.qs("#schedulebrightf").value = this.arrToTime(this.cfg.schedule.from);
     this.qs("#schedulebrightt").value = this.arrToTime(this.cfg.schedule.to);
-    this.qs("#schedulebright").value = this.cfg.schedule.bright;
+    
+
 
     if(this.cfg.board_mode == 20 || this.cfg.board_mode == 21){
       this.qs(".custommsg").style.display = "block";
@@ -502,6 +506,9 @@ export default class {
           schedule_bright: that.cfg.schedule.bright
         });
     });
+    this.listen("#clearCustom", "click", e => {
+      that.wsRequest("clear_custom");
+    });
     this.listen("#saveDisplay", "click", e => {
       that.wsRequest("saveDisplay");
     });
@@ -528,6 +535,7 @@ export default class {
             that.cfg.date[2] = dt.getDate();
             this.qs("#manualtime").value = that.strTime;
             this.qs("#manualdate").value = that.strDate;
+            this.wsSett({time: that.strTime, date: that.strDate}); // that.cfg.time[0]
     });
     this.listen("#timezone", "change", e => {
       that.cfg.timezone = Number(e.target.value);
@@ -589,7 +597,7 @@ export default class {
             });
     });
     this.listen("#applyTime", "click", e => {
-      that.wsSett({"time": that.strTime, "date": that.strDate}); // that.cfg.time[0]
+      that.wsSett({time: that.strTime, date: that.strDate}); // that.cfg.time[0]
     });
 
     this.listen("#defaults", "click", e => {
@@ -601,6 +609,11 @@ export default class {
     this.listen("#reboot", "click", e => {
       this.wsRequest("reboot");
     });
+    this.listen("#useDST", "change", e => {
+      that.cfg.use_dst = e.target.checked;
+      that.wsSett({use_dst: e.target.checked});
+    });
+
   }
 
   vykresli()

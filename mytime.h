@@ -39,7 +39,8 @@ class MYTIME {
       timeformat getTime(String t);
       dateformat getDate();
       datetimeformat getDateTime();
-      datetimeformat DSTdateTime(bool use = true);
+      datetimeformat DSTdateTime();
+      datetimeformat StrtoDateTime(String d);
       String getTimeStr();
       String getTimeHMStr();
       String getTimeHMStrDSP();
@@ -50,13 +51,21 @@ class MYTIME {
       uint8_t getDow(dateformat dd, bool startmonday = false);
       String getDowStr(bool short_ = true, bool accent = false);
       String getMonStr(bool short_ = false, bool accent = false, bool sklon = false);
-      bool GetNtpTime(uint8_t ntz);
+      String DayInfo();
       bool GetNtpTime();
       uint8_t getTZ();
       bool hasRTC();
       void i2cList();
       bool isBetween(timeformat from, timeformat to);
       bool isDST();
+      bool useDST = false;
+      NTPClient   timeClient = NTPClient(this->ntpUDP, this->tz);
+      datetimeformat editSec    (datetimeformat date, bool plus = true);
+      datetimeformat editMinute (datetimeformat date, bool plus = true);
+      datetimeformat editHour   (datetimeformat date, bool plus = true);
+      datetimeformat editDay    (datetimeformat date, bool plus = true);
+      datetimeformat editMonth  (datetimeformat date, bool plus = true);
+      datetimeformat editYear   (datetimeformat date, bool plus = true);
       MYTIME();
       ~MYTIME();
     private:
@@ -77,7 +86,6 @@ class MYTIME {
       uint32_t    updateAt   = 0;
       bool        rtcReady   = false;
       ErriezDS1307 RTC;
-      NTPClient   timeClient = NTPClient(this->ntpUDP, this->tz);
       timeformat t;
       dateformat d;
  };
